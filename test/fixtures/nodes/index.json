@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1,
+    "ip": "192.168.1.1",
+    "state": "online",
+    "location": {"country": "DE", "city": "Frankfurt"},
+    "prices": {"gpu_hour": 0.5, "cpu_hour": 0.1},
+    "system": {"gpu": "RTX 4090", "cpu": "AMD EPYC", "ram": 128}
+  },
+  {
+    "id": 2,
+    "ip": "192.168.1.2",
+    "state": "offline",
+    "location": {"country": "US", "city": "New York"},
+    "prices": {"gpu_hour": 0.4, "cpu_hour": 0.08},
+    "system": {"gpu": "RTX 3090", "cpu": "Intel Xeon", "ram": 64}
+  }
+]

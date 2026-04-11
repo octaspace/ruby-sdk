@@ -1,0 +1,19 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Launch the dummy Rails playground app
+# Run: bin/playground
+#
+# Set OCTA_API_KEY in your environment before starting:
+#   OCTA_API_KEY=your_key bin/playground
+
+dummy_path = File.expand_path("../test/dummy", __dir__)
+
+unless Dir.exist?(dummy_path)
+  warn "Dummy app not found at #{dummy_path}"
+  exit 1
+end
+
+Dir.chdir(dummy_path) do
+  exec "bin/rails server #{ARGV.join(" ")}"
+end

@@ -1,0 +1,15 @@
+<h1>Account</h1>
+
+<% if @error %>
+  <div class="error"><%= @error %></div>
+<% else %>
+  <div class="card">
+    <h2>Profile</h2>
+    <pre><%= JSON.pretty_generate(@profile.data) %></pre>
+  </div>
+
+  <div class="card">
+    <h2>Balance</h2>
+    <pre><%= JSON.pretty_generate(@balance.data) %></pre>
+  </div>
+<% end %>

@@ -1,0 +1,32 @@
+<h1>Nodes</h1>
+
+<% if @error %>
+  <div class="error"><%= @error %></div>
+<% elsif @nodes.data.present? %>
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th><th>IP</th><th>State</th><th>Location</th><th>GPU</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% Array(@nodes.data).each do |node| %>
+          <tr>
+            <td><%= node["id"] %></td>
+            <td><%= node["ip"] %></td>
+            <td>
+              <span class="badge <%= node["state"] == "online" ? "badge-green" : "badge-red" %>">
+                <%= node["state"] %>
+              </span>
+            </td>
+            <td><%= node.dig("location", "city") %>, <%= node.dig("location", "country") %></td>
+            <td><%= node.dig("system", "gpu") %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <div class="card"><p style="color:#888">No nodes found.</p></div>
+<% end %>

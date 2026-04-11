@@ -1,0 +1,15 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "bundler/setup"
+require "octaspace"
+
+# Quick interactive console for experimenting with the SDK
+# Run: bin/console
+#
+# Example:
+#   client = OctaSpace::Client.new(api_key: ENV["OCTA_API_KEY"])
+#   client.nodes.list
+
+require "irb"
+IRB.start(__FILE__)

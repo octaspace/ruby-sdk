@@ -1,0 +1,25 @@
+<h1>Sessions</h1>
+
+<% if @error %>
+  <div class="error"><%= @error %></div>
+<% elsif @sessions.data.present? %>
+  <div class="card">
+    <table>
+      <thead>
+        <tr><th>UUID</th><th>Service</th><th>App</th><th>Node</th></tr>
+      </thead>
+      <tbody>
+        <% Array(@sessions.data).each do |s| %>
+          <tr>
+            <td><code style="font-size:11px"><%= s["uuid"] %></code></td>
+            <td><%= s["service"] %></td>
+            <td><%= s["app_name"] %></td>
+            <td><%= s["node_id"] %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <div class="card"><p style="color:#888">No active sessions.</p></div>
+<% end %>

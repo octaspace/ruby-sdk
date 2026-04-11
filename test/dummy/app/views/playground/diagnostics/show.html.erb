@@ -1,0 +1,35 @@
+<h1>Diagnostics</h1>
+
+<div class="card">
+  <h2>Transport</h2>
+  <table>
+    <tr><th>Mode</th><td><%= @transport_stats[:mode] %></td></tr>
+    <% if @transport_stats[:pools] %>
+      <tr><th>Pools</th><td><pre style="margin:0"><%= JSON.pretty_generate(@transport_stats[:pools]) %></pre></td></tr>
+    <% end %>
+  </table>
+</div>
+
+<div class="card">
+  <h2>Configuration</h2>
+  <table>
+    <tr><th>Base URL</th>    <td><%= @config.base_url %></td></tr>
+    <tr><th>Keep-alive</th>  <td><span class="badge <%= @config.keep_alive? ? "badge-green" : "badge-red" %>"><%= @config.keep_alive? %></span></td></tr>
+    <tr><th>Pool size</th>   <td><%= @config.pool_size %></td></tr>
+    <tr><th>Read timeout</th><td><%= @config.read_timeout %>s</td></tr>
+    <tr><th>Max retries</th> <td><%= @config.max_retries %></td></tr>
+    <tr><th>SSL verify</th>  <td><%= @config.ssl_verify %></td></tr>
+    <tr><th>User-Agent</th>  <td><code style="font-size:11px"><%= @config.user_agent %></code></td></tr>
+  </table>
+</div>
+
+<% if @rotator_stats %>
+  <div class="card">
+    <h2>URL Rotator</h2>
+    <table>
+      <tr><th>Total URLs</th>    <td><%= @rotator_stats[:total] %></td></tr>
+      <tr><th>Available</th>     <td><%= @rotator_stats[:available] %></td></tr>
+      <tr><th>Failed (cooldown)</th><td><%= Array(@rotator_stats[:failed]).join(", ").presence || "none" %></td></tr>
+    </table>
+  </div>
+<% end %>

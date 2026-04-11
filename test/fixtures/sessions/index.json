@@ -1,0 +1,10 @@
+[
+  {
+    "uuid": "sess-abc-123",
+    "service": "mr",
+    "app_name": "Stable Diffusion",
+    "node_id": 1,
+    "urls": {"jupyter": "https://sess-abc-123.octa.space"},
+    "prices": {"gpu_hour": 0.5}
+  }
+]
