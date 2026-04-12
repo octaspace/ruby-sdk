@@ -23,10 +23,10 @@ module OctaSpace
 
       # @param urls [Array<String>] ordered list of API base URLs
       def initialize(urls)
-        @urls    = urls.dup.freeze
+        @urls = urls.dup.freeze
         @counter = 0
-        @failed  = {}   # url => Time failed_at
-        @mutex   = Mutex.new
+        @failed = {}   # url => Time failed_at
+        @mutex = Mutex.new
       end
 
       # @return [String] next available URL (round-robin), falls back to first if all failed
@@ -74,9 +74,9 @@ module OctaSpace
       # @return [Hash] diagnostic stats
       def stats
         {
-          total:     @urls.size,
+          total: @urls.size,
           available: available_urls.size,
-          failed:    @mutex.synchronize { @failed.keys }
+          failed: @mutex.synchronize { @failed.keys }
         }
       end
 

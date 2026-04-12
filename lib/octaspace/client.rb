@@ -24,6 +24,10 @@ module OctaSpace
   #     base_urls: ["https://api.octa.space", "https://api2.octa.space"]
   #   )
   #
+  # @example Without API key (public endpoints only)
+  #   client = OctaSpace::Client.new
+  #   client.network.info
+  #
   # @example With hooks
   #   client = OctaSpace::Client.new(
   #     api_key:     ENV["OCTA_API_KEY"],
@@ -32,20 +36,20 @@ module OctaSpace
   #   )
   class Client
     attr_reader :accounts, :nodes, :sessions, :apps,
-                :network, :services, :idle_jobs
+      :network, :services, :idle_jobs
 
-    # @param api_key [String] API key for authentication
+    # @param api_key [String, nil] API key for authentication (optional for public endpoints)
     # @param opts [Hash] Per-instance configuration overrides.
     #   Any attribute from OctaSpace::Configuration can be passed here.
-    def initialize(api_key:, **opts)
-      @config    = build_config(api_key, opts)
-      @transport = build_transport
-      @accounts  = Resources::Accounts.new(@transport)
-      @nodes     = Resources::Nodes.new(@transport)
-      @sessions  = Resources::Sessions.new(@transport)
-      @apps      = Resources::Apps.new(@transport)
-      @network   = Resources::Network.new(@transport)
-      @services  = Resources::Services.new(@transport)
+    def initialize(api_key: nil, transport: nil, **opts)
+      @config = build_config(api_key, opts)
+      @transport = transport || build_transport
+      @accounts = Resources::Accounts.new(@transport)
+      @nodes = Resources::Nodes.new(@transport)
+      @sessions = Resources::Sessions.new(@transport)
+      @apps = Resources::Apps.new(@transport)
+      @network = Resources::Network.new(@transport)
+      @services = Resources::Services.new(@transport)
       @idle_jobs = Resources::IdleJobs.new(@transport)
     end
 
@@ -57,7 +61,9 @@ module OctaSpace
     # Transport diagnostics (pool stats when in keep_alive mode)
     # @return [Hash]
     def transport_stats
-      if @transport.respond_to?(:pool_stats)
+      if @transport.respond_to?(:transport_stats)
+        @transport.transport_stats
+      elsif @transport.respond_to?(:pool_stats)
         {mode: :persistent, pools: @transport.pool_stats}
       elsif @config.urls.size > 1
         {mode: :standard, rotator: @transport.instance_variable_get(:@rotator)&.stats}

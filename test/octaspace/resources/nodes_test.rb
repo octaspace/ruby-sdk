@@ -30,13 +30,14 @@ class OctaSpace::NodesResourceTest < Minitest::Test
   end
 
   def test_reboot_returns_success
-    stub_post("/nodes/1/reboot", status: 200, body: "{}")
+    stub_request(:get, "#{StubHelpers::BASE_URL}/nodes/1/reboot")
+      .to_return(status: 200, body: "{}", headers: json_headers)
     response = @client.nodes.reboot(1)
     assert response.success?
   end
 
   def test_update_prices
-    stub_request(:put, "#{StubHelpers::BASE_URL}/nodes/1/prices")
+    stub_request(:patch, "#{StubHelpers::BASE_URL}/nodes/1/prices")
       .to_return(status: 200, body: "{}", headers: json_headers)
     response = @client.nodes.update_prices(1, gpu_hour: 0.5, cpu_hour: 0.1)
     assert response.success?

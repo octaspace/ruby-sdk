@@ -6,8 +6,8 @@ module OctaSpace
     attr_reader :response, :status, :request_id
 
     def initialize(message = nil, response: nil)
-      @response   = response
-      @status     = response&.status
+      @response = response
+      @status = response&.status
       @request_id = response&.request_id
       super(message || "OctaSpace API error")
     end
@@ -17,9 +17,9 @@ module OctaSpace
   class ConfigurationError < Error; end
 
   # Network-level errors (before HTTP response is received)
-  class NetworkError    < Error; end
+  class NetworkError < Error; end
   class ConnectionError < NetworkError; end
-  class TimeoutError    < NetworkError; end
+  class TimeoutError < NetworkError; end
 
   # API-level errors (HTTP response received, but indicates failure)
   class ApiError < Error; end
@@ -47,10 +47,10 @@ module OctaSpace
   end
 
   # 5xx Server Errors
-  class ServerError             < ApiError; end
-  class BadGatewayError         < ServerError; end  # 502
-  class ServiceUnavailableError < ServerError; end  # 503
-  class GatewayTimeoutError     < ServerError; end  # 504
+  class ServerError < ApiError; end
+  class BadGatewayError < ServerError; end # 502
+  class ServiceUnavailableError < ServerError; end # 503
+  class GatewayTimeoutError < ServerError; end # 504
 
   # HTTP status code → exception class mapping
   STATUS_ERRORS = {

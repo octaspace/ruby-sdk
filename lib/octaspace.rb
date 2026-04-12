@@ -62,15 +62,30 @@ module OctaSpace
     # Reset global configuration to defaults (useful in tests)
     def reset_configuration!
       @configuration = Configuration.new
+      @shared_client = nil
     end
 
-    # Convenience factory: create a client using global configuration
+    # Shared client lazily built from global configuration.
+    # Re-used across calls when no overrides are given — suitable for
+    # Rails controllers that call OctaSpace.client on every request.
+    # Passing api_key or any override creates a one-off client instead.
     #
-    # @param api_key [String, nil] override global api_key for this client
+    # @param api_key [String, nil] override api_key for this call only
     # @param opts [Hash] additional per-client configuration overrides
     # @return [OctaSpace::Client]
     def client(api_key: nil, **opts)
-      Client.new(api_key: api_key || configuration.api_key, **opts)
+      if api_key.nil? && opts.empty?
+        @shared_client ||= Client.new(api_key: configuration.api_key)
+      else
+        Client.new(api_key: api_key || configuration.api_key, **opts)
+      end
+    end
+
+    # Gracefully shut down the shared client's persistent connections.
+    # Called automatically by the Railtie at_exit hook when Rails stops.
+    def shutdown_shared_client!
+      @shared_client&.shutdown
+      @shared_client = nil
     end
   end
 end

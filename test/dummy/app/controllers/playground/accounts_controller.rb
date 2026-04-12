@@ -1,14 +1,15 @@
 # frozen_string_literal: true
 
 module Playground
-  class AccountsController < ApplicationController
+  class AccountsController < BaseController
     def show
-      @profile = octa_client.accounts.profile
-      @balance = octa_client.accounts.balance
-    rescue OctaSpace::AuthenticationError
-      @error = "Invalid API key. Set OCTA_API_KEY environment variable."
-    rescue OctaSpace::Error => e
-      @error = "API error: #{e.message}"
+      if playground_api_key_present?
+        @profile = capture_api_call(label: "octa_client.accounts.profile", path: "/accounts") { octa_client.accounts.profile }
+        @balance = capture_api_call(label: "octa_client.accounts.balance", path: "/accounts/balance") { octa_client.accounts.balance }
+      else
+        @profile = nil
+        @balance = nil
+      end
     end
   end
 end

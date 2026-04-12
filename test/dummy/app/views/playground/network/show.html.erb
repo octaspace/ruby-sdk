@@ -1,0 +1,80 @@
+<% network_data = @network.respond_to?(:data) ? @network.data : nil %>
+<% network_error = @network if @network.is_a?(OctaSpace::Error) %>
+<% config_snapshot = {
+  urls: playground_config.urls,
+  mock_scenario: playground_mock_scenario,
+  open_timeout: playground_config.open_timeout,
+  read_timeout: playground_config.read_timeout,
+  write_timeout: playground_config.write_timeout,
+  keep_alive: playground_config.keep_alive?,
+  pool_size: playground_config.pool_size,
+  pool_timeout: playground_config.pool_timeout,
+  idle_timeout: playground_config.idle_timeout,
+  max_retries: playground_config.max_retries,
+  retry_interval: playground_config.retry_interval,
+  backoff_factor: playground_config.backoff_factor
+} %>
+
+<div class="w-full max-w-full space-y-6">
+  <div>
+    <div class="flex items-center gap-2">
+      <h1 class="text-lg font-semibold text-slate-100">Network Stats</h1>
+      <span class="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[11px] font-medium text-emerald-400">public</span>
+      <% if playground_mock_active? %>
+        <span class="rounded-full bg-amber-500/20 px-2 py-0.5 text-[11px] font-medium text-amber-400">mock</span>
+      <% end %>
+    </div>
+    <p class="mt-1 text-sm text-slate-500">
+      Public endpoint — no API key required. Compare the current transport payload with the Ruby client configuration side by side.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+    <div class="space-y-3 rounded-xl border border-slate-800 bg-slate-900 p-5">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h2 class="text-sm font-semibold text-slate-100">Ruby SDK</h2>
+          <code class="text-[11px] text-cyan-500">octa_client.network.info</code>
+        </div>
+        <%= link_to "Refetch", playground_network_path, class: "rounded border border-slate-700 px-2.5 py-1 text-xs text-slate-400 transition-colors hover:border-slate-600 hover:text-slate-200" %>
+      </div>
+
+      <div class="space-y-1 text-xs text-slate-500">
+        <div>status: <span class="text-slate-300"><%= @network.respond_to?(:status) ? @network.status : "—" %></span></div>
+        <div>request_id: <span class="font-mono text-slate-300"><%= @network.respond_to?(:request_id) ? @network.request_id || "—" : "—" %></span></div>
+      </div>
+
+      <% if network_error %>
+        <%= render "playground/shared/error_card", error: network_error %>
+      <% elsif network_data %>
+        <%= render "playground/shared/json_viewer", data: network_data %>
+      <% else %>
+        <div class="rounded-lg border border-dashed border-slate-800 bg-slate-950/40 px-4 py-6 text-sm text-slate-500">No network payload available.</div>
+      <% end %>
+    </div>
+
+    <div class="space-y-3 rounded-xl border border-slate-800 bg-slate-900 p-5">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h2 class="text-sm font-semibold text-slate-100">Transport</h2>
+          <code class="text-[11px] text-violet-400"><%= playground_transport_label %></code>
+        </div>
+        <span class="rounded border border-slate-700 px-2 py-0.5 text-[10px] uppercase tracking-wider text-slate-400"><%= playground_transport_stats[:mode] %></span>
+      </div>
+
+      <div class="space-y-1 text-xs text-slate-500">
+        <div>description: <span class="text-slate-300"><%= playground_transport_description %></span></div>
+        <div>timeouts: <span class="text-slate-300"><%= playground_timeout_label %></span></div>
+        <div>keep_alive: <span class="text-slate-300"><%= playground_config.keep_alive? %></span></div>
+        <div>max_retries: <span class="text-slate-300"><%= playground_config.max_retries %></span></div>
+      </div>
+
+      <%= render "playground/shared/json_viewer", data: config_snapshot %>
+    </div>
+  </div>
+
+  <div class="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
+    <div class="mb-2 text-[11px] font-medium uppercase tracking-wider text-slate-500">Client Configuration</div>
+    <%= render "playground/shared/json_viewer", data: config_snapshot, max_height: "max-h-24" %>
+  </div>
+</div>

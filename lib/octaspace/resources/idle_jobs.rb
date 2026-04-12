@@ -4,42 +4,28 @@ module OctaSpace
   module Resources
     # Idle Jobs API endpoints
     #
+    # Each idle job is identified by both a node ID and a job ID.
+    #
     # @example
-    #   client.idle_jobs.list
-    #   client.idle_jobs.find(42)
-    #   client.idle_jobs.create(node_id: 1, command: "sleep 60")
-    #   client.idle_jobs.logs(42)
+    #   client.idle_jobs.find(node_id: 69, job_id: 42)
+    #   client.idle_jobs.logs(node_id: 69, job_id: 42)
     class IdleJobs < Base
-      # List all idle jobs
-      # GET /idle-jobs
-      # @param params [Hash] optional filter params
+      # Fetch a single idle job status
+      # GET /idle_jobs/:node_id/:job_id
+      # @param node_id [Integer, String]
+      # @param job_id [Integer, String]
       # @return [OctaSpace::Response]
-      def list(**params)
-        get("/idle-jobs", params: params)
-      end
-
-      # Fetch a single idle job by ID
-      # GET /idle-jobs/:id
-      # @param id [Integer, String]
-      # @return [OctaSpace::Response]
-      def find(id)
-        get("/idle-jobs/#{id}")
-      end
-
-      # Create an idle job
-      # POST /idle-jobs
-      # @param attrs [Hash] job parameters
-      # @return [OctaSpace::Response]
-      def create(**attrs)
-        post("/idle-jobs", body: attrs)
+      def find(node_id:, job_id:)
+        get("/idle_jobs/#{encode(node_id)}/#{encode(job_id)}")
       end
 
       # Fetch idle job logs
-      # GET /idle-jobs/:id/logs
-      # @param id [Integer, String]
+      # GET /idle_jobs/:node_id/:job_id/logs
+      # @param node_id [Integer, String]
+      # @param job_id [Integer, String]
       # @return [OctaSpace::Response]
-      def logs(id)
-        get("/idle-jobs/#{id}/logs")
+      def logs(node_id:, job_id:)
+        get("/idle_jobs/#{encode(node_id)}/#{encode(job_id)}/logs")
       end
     end
   end

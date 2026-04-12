@@ -1,0 +1,22 @@
+<% node_data = @node.respond_to?(:data) ? @node.data : nil %>
+<% node_error = @node if @node.is_a?(OctaSpace::Error) %>
+
+<div class="w-full max-w-full space-y-6">
+  <div class="flex items-start justify-between gap-4">
+    <div>
+      <h1 class="text-lg font-semibold text-slate-100">Nodes</h1>
+      <p class="mt-1 text-sm text-slate-500">
+        Direct node view for <code class="text-cyan-400">octa_client.nodes.find(<%= params[:id] %>)</code>.
+      </p>
+    </div>
+    <%= link_to "Back to list", playground_nodes_path(selected_id: params[:id]), class: "rounded border border-slate-700 px-3 py-1.5 text-xs text-slate-400 transition-colors hover:border-slate-600 hover:text-slate-200" %>
+  </div>
+
+  <% if node_error %>
+    <%= render "playground/shared/error_card", error: node_error %>
+  <% elsif node_data %>
+    <%= render "playground/shared/node_detail_panel", node: node_data, node_id: params[:id], close_path: playground_nodes_path %>
+  <% else %>
+    <div class="rounded-xl border border-dashed border-slate-800 bg-slate-900/30 px-6 py-12 text-center text-sm text-slate-500">Node payload unavailable.</div>
+  <% end %>
+</div>

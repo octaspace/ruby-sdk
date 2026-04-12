@@ -86,19 +86,19 @@ module OctaSpace
     attr_accessor :user_agent
 
     DEFAULTS = {
-      base_url:        "https://api.octa.space",
-      open_timeout:    10,
-      read_timeout:    30,
-      write_timeout:   30,
-      keep_alive:      false,
-      pool_size:       5,
-      pool_timeout:    5,
-      idle_timeout:    60,
-      max_retries:     2,
-      retry_interval:  0.5,
-      backoff_factor:  2.0,
-      ssl_verify:      true,
-      log_level:       :info
+      base_url: "https://api.octa.space",
+      open_timeout: 10,
+      read_timeout: 30,
+      write_timeout: 30,
+      keep_alive: false,
+      pool_size: 5,
+      pool_timeout: 5,
+      idle_timeout: 60,
+      max_retries: 2,
+      retry_interval: 0.5,
+      backoff_factor: 2.0,
+      ssl_verify: true,
+      log_level: :info
     }.freeze
 
     def initialize
@@ -107,8 +107,8 @@ module OctaSpace
     end
 
     # Alias: `persistent` is the Cube-internal term; `keep_alive` is the public SDK term
-    alias persistent  keep_alive
-    alias persistent= keep_alive=
+    alias_method :persistent, :keep_alive
+    alias_method :persistent=, :keep_alive=
 
     # @return [Boolean]
     def keep_alive? = !!keep_alive
@@ -117,8 +117,8 @@ module OctaSpace
     # base_urls takes priority over base_url; always returns an Array.
     # @return [Array<String>]
     def urls
-      list = base_urls.presence || base_url
-      Array(list).map(&:to_s).reject(&:empty?)
+      candidates = Array(base_urls).map(&:to_s).reject(&:empty?)
+      candidates.empty? ? Array(base_url).map(&:to_s).reject(&:empty?) : candidates
     end
 
     # Deep-clone configuration for per-client overrides

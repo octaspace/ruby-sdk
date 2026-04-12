@@ -1,0 +1,1 @@
+// Intentionally empty: the playground does not register a service worker.

@@ -1,0 +1,9 @@
+{
+  "uuid": "sess-abc-123",
+  "service": "mr",
+  "status": "running",
+  "node_id": 1,
+  "app_name": "Stable Diffusion",
+  "started_at": "2026-04-11T08:00:00Z",
+  "urls": {"jupyter": "https://sess-abc-123.octa.space"}
+}

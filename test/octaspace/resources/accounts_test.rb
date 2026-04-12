@@ -23,6 +23,12 @@ class OctaSpace::AccountsResourceTest < Minitest::Test
     assert response.data.key?("balance")
   end
 
+  def test_generate_wallet_returns_success
+    stub_post("/accounts", status: 201, body: '{"wallet":"0xabc123","network":"ETH"}')
+    response = @client.accounts.generate_wallet
+    assert response.success?
+  end
+
   def test_profile_raises_authentication_error_on_401
     stub_error(:get, "/accounts", status: 401, message: "Unauthorized")
     assert_raises(OctaSpace::AuthenticationError) { @client.accounts.profile }

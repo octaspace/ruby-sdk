@@ -2,7 +2,7 @@
 
 module OctaSpace
   module Resources
-    module Services
+    class Services
       # VPN service endpoints
       #
       # @example
@@ -14,7 +14,7 @@ module OctaSpace
         # @param params [Hash] optional filter params
         # @return [OctaSpace::Response]
         def list(**params)
-          get("/services/vpn", params: params)
+          get("/services/vpn", params:)
         end
 
         # Create (start) a VPN session

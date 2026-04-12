@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "uuid": "249b4cb3-3db1-4c06-98a4-772ba88cd81c",
+    "name": "Stable Diffusion",
+    "version": "2.1",
+    "category": "AI",
+    "image": "ubuntu:24.04",
+    "docker_image": "octaspace/stable-diffusion:2.1",
+    "min_vram_gb": 8
+  },
+  {
+    "id": 2,
+    "uuid": "a7f5f354-5d7a-4f4e-b927-a4f18f3eb241",
+    "name": "ComfyUI",
+    "version": "1.0",
+    "category": "AI",
+    "image": "ubuntu:22.04",
+    "docker_image": "octaspace/comfyui:latest",
+    "min_vram_gb": 6
+  }
+]

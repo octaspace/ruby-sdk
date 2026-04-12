@@ -1,0 +1,7 @@
+{
+  "data": [
+    {"line": 1, "text": "Epoch 1/10 - loss: 0.842"},
+    {"line": 2, "text": "Epoch 2/10 - loss: 0.731"},
+    {"line": 3, "text": "Training complete."}
+  ]
+}

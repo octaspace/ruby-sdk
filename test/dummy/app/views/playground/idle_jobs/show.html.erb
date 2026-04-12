@@ -1,0 +1,76 @@
+<% job_error = @job if @job.is_a?(OctaSpace::Error) %>
+<% logs_error = @logs if @logs.is_a?(OctaSpace::Error) %>
+<% job_data = @job.respond_to?(:data) ? @job.data : nil %>
+<% logs_data = @logs.respond_to?(:data) ? @logs.data : nil %>
+
+<div class="w-full max-w-full space-y-6">
+  <div class="flex items-start justify-between gap-4">
+    <div>
+      <h1 class="text-lg font-semibold text-slate-100">Idle Jobs</h1>
+      <p class="mt-1 text-sm text-slate-500">
+        <code class="text-cyan-400">octa_client.idle_jobs.find</code> + <code class="text-cyan-400">octa_client.idle_jobs.logs</code> — inspect a specific job by <code class="text-cyan-400">node_id</code> and <code class="text-cyan-400">job_id</code>.
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <% if playground_mock_active? %>
+        <span class="rounded bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-400">Mock: <%= playground_mock_scenario %></span>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="rounded-xl border border-slate-800 bg-slate-900 p-5">
+    <%= form_with url: playground_idle_jobs_path, method: :get, local: true, class: "grid gap-4 md:grid-cols-[minmax(0,10rem)_minmax(0,10rem)_auto]" do %>
+      <div>
+        <label class="mb-1.5 block text-[10px] font-medium uppercase tracking-wider text-slate-500">Node ID</label>
+        <%= text_field_tag :node_id, @node_id, class: "w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 font-mono text-xs text-slate-200 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
+      </div>
+      <div>
+        <label class="mb-1.5 block text-[10px] font-medium uppercase tracking-wider text-slate-500">Job ID</label>
+        <%= text_field_tag :job_id, @job_id, class: "w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 font-mono text-xs text-slate-200 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
+      </div>
+      <div class="flex items-end">
+        <%= button_tag "Load Job", type: "submit", class: "rounded border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-xs font-medium text-cyan-400 transition-colors hover:bg-cyan-500/20 hover:text-cyan-300" %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-2">
+    <div class="rounded-xl border border-slate-800 bg-slate-900 p-5">
+      <div class="mb-4 flex items-center justify-between gap-4">
+        <div>
+          <h2 class="text-sm font-semibold text-slate-100">Status</h2>
+          <code class="mt-0.5 text-[11px] text-cyan-500">octa_client.idle_jobs.find(node_id: <%= @node_id %>, job_id: <%= @job_id %>)</code>
+        </div>
+      </div>
+
+      <% if params[:node_id].blank? || params[:job_id].blank? %>
+        <div class="rounded-lg border border-dashed border-slate-800 bg-slate-950/40 px-4 py-6 text-center text-sm text-slate-500">Enter a node ID and job ID to load the job.</div>
+      <% elsif job_error %>
+        <%= render "playground/shared/error_card", error: job_error, max_height: "max-h-56" %>
+      <% elsif job_data.present? %>
+        <%= render "playground/shared/json_viewer", data: job_data, max_height: "max-h-[28rem]" %>
+      <% else %>
+        <div class="rounded-lg border border-dashed border-slate-800 bg-slate-950/40 px-4 py-6 text-center text-sm text-slate-500">No job response available.</div>
+      <% end %>
+    </div>
+
+    <div class="rounded-xl border border-slate-800 bg-slate-900 p-5">
+      <div class="mb-4 flex items-center justify-between gap-4">
+        <div>
+          <h2 class="text-sm font-semibold text-slate-100">Logs</h2>
+          <code class="mt-0.5 text-[11px] text-violet-400">octa_client.idle_jobs.logs(node_id: <%= @node_id %>, job_id: <%= @job_id %>)</code>
+        </div>
+      </div>
+
+      <% if params[:node_id].blank? || params[:job_id].blank? %>
+        <div class="rounded-lg border border-dashed border-slate-800 bg-slate-950/40 px-4 py-6 text-center text-sm text-slate-500">Logs are loaded together with job details.</div>
+      <% elsif logs_error %>
+        <%= render "playground/shared/error_card", error: logs_error, max_height: "max-h-56" %>
+      <% elsif logs_data.present? %>
+        <%= render "playground/shared/json_viewer", data: logs_data, max_height: "max-h-[28rem]" %>
+      <% else %>
+        <div class="rounded-lg border border-dashed border-slate-800 bg-slate-950/40 px-4 py-6 text-center text-sm text-slate-500">No log response available.</div>
+      <% end %>
+    </div>
+  </div>
+</div>

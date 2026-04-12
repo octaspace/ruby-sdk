@@ -12,7 +12,7 @@ module OctaSpace
       # @param params [Hash] optional filter params
       # @return [OctaSpace::Response]
       def list(**params)
-        get("/apps", params: params)
+        get("/apps", params:)
       end
     end
   end

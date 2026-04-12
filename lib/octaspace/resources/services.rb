@@ -1,10 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "services/session_proxy"
-require_relative "services/machine_rental"
-require_relative "services/vpn"
-require_relative "services/render"
-
 module OctaSpace
   module Resources
     # Services namespace — aggregates MR, VPN, Render subresources
@@ -13,7 +8,7 @@ module OctaSpace
     # @example
     #   client.services.mr.list
     #   client.services.vpn.create(node_id: 123)
-    #   client.services.render.create(node_id: 456, app_id: 7)
+    #   client.services.render.create(node_id: 456, disk_size: 100)
     #
     #   # Session proxy pattern
     #   client.services.session("uuid-123").info
@@ -23,8 +18,8 @@ module OctaSpace
 
       def initialize(transport)
         super
-        @mr     = Services::MachineRental.new(transport)
-        @vpn    = Services::Vpn.new(transport)
+        @mr = Services::MachineRental.new(transport)
+        @vpn = Services::Vpn.new(transport)
         @render = Services::Render.new(transport)
       end
 
@@ -37,3 +32,8 @@ module OctaSpace
     end
   end
 end
+
+require_relative "services/session_proxy"
+require_relative "services/machine_rental"
+require_relative "services/vpn"
+require_relative "services/render"

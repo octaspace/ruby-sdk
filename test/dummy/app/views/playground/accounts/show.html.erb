@@ -1,15 +1,66 @@
-<h1>Account</h1>
-
-<% if @error %>
-  <div class="error"><%= @error %></div>
-<% else %>
-  <div class="card">
-    <h2>Profile</h2>
-    <pre><%= JSON.pretty_generate(@profile.data) %></pre>
-  </div>
-
-  <div class="card">
-    <h2>Balance</h2>
-    <pre><%= JSON.pretty_generate(@balance.data) %></pre>
+<% profile_data = @profile.respond_to?(:data) ? @profile.data : nil %>
+<% balance_data = @balance.respond_to?(:data) ? @balance.data : nil %>
+<% profile_error = @profile if @profile.is_a?(OctaSpace::Error) %>
+<% balance_error = @balance if @balance.is_a?(OctaSpace::Error) %>
+<% profile_hash = profile_data || {} %>
+<% balance_hash = balance_data || {} %>
+<% balance_value = balance_data && (balance_hash["balance"] || balance_hash["amount"] || balance_hash.values.first) %>
+<% profile_formatted = capture do %>
+  <div class="space-y-0.5">
+    <div class="flex items-center justify-between gap-4 border-b border-slate-800/60 py-2 text-xs">
+      <span class="text-slate-500">Account UUID</span>
+      <span class="min-w-0 break-all text-right font-mono text-slate-300"><%= profile_hash["account_uuid"] || profile_hash.dig("account", "uuid") || "—" %></span>
+    </div>
+    <div class="flex items-center justify-between gap-4 border-b border-slate-800/60 py-2 text-xs">
+      <span class="text-slate-500">Email</span>
+      <span class="min-w-0 break-all text-right font-mono text-slate-300"><%= profile_hash["email"] || profile_hash.dig("account", "email") || "—" %></span>
+    </div>
+    <div class="flex items-center justify-between gap-4 border-b border-slate-800/60 py-2 text-xs">
+      <span class="text-slate-500">Avatar</span>
+      <span class="min-w-0 break-all text-right font-mono text-slate-300"><%= profile_hash["avatar"] || "—" %></span>
+    </div>
   </div>
 <% end %>
+<% balance_formatted = capture do %>
+  <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+    <div class="rounded-lg border border-slate-800 bg-slate-950/70 p-4">
+      <div class="text-[10px] uppercase tracking-wider text-slate-500">Balance</div>
+      <div class="mt-2 break-all text-base font-semibold text-slate-100"><%= balance_value || "—" %></div>
+    </div>
+    <div class="rounded-lg border border-slate-800 bg-slate-950/70 p-4">
+      <div class="text-[10px] uppercase tracking-wider text-slate-500">Currency</div>
+      <div class="mt-2 break-all text-base font-semibold text-slate-100"><%= balance_hash["currency"] || balance_hash["unit"] || "OCTA" %></div>
+    </div>
+  </div>
+<% end %>
+
+<div class="w-full max-w-full space-y-6">
+  <div>
+    <h1 class="text-lg font-semibold text-slate-100">Account</h1>
+    <p class="mt-1 text-sm text-slate-500">
+      Direct account view for the Ruby playground. The Dashboard uses the same panels in a condensed layout.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <%= render "playground/shared/resource_panel",
+               title: "Profile",
+               hook: "octa_client.accounts.profile",
+               data: profile_data,
+               error: profile_error,
+               locked: !playground_api_key_present?,
+               tab_param: :profile_tab,
+               locked_copy: "Enter an API key in the sidebar to load this resource",
+               formatted: profile_formatted %>
+
+    <%= render "playground/shared/resource_panel",
+               title: "Balance",
+               hook: "octa_client.accounts.balance",
+               data: balance_data,
+               error: balance_error,
+               locked: !playground_api_key_present?,
+               tab_param: :balance_tab,
+               locked_copy: "Enter an API key in the sidebar to load this resource",
+               formatted: balance_formatted %>
+  </div>
+</div>

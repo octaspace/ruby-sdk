@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
+require "uri"
+
 module OctaSpace
   module Resources
-    module Services
+    class Services
       # Proxy object for operations on a specific service session
       #
       # Obtained via: client.services.session("uuid")
@@ -17,7 +19,7 @@ module OctaSpace
         # @param uuid [String] session UUID
         def initialize(transport, uuid)
           @transport = transport
-          @uuid      = uuid
+          @uuid = URI.encode_www_form_component(uuid.to_s)
         end
 
         # Fetch session details

@@ -1,35 +1,135 @@
-<h1>Diagnostics</h1>
-
-<div class="card">
-  <h2>Transport</h2>
-  <table>
-    <tr><th>Mode</th><td><%= @transport_stats[:mode] %></td></tr>
-    <% if @transport_stats[:pools] %>
-      <tr><th>Pools</th><td><pre style="margin:0"><%= JSON.pretty_generate(@transport_stats[:pools]) %></pre></td></tr>
+<div class="w-full max-w-full space-y-6">
+  <div class="flex items-start justify-between gap-4">
+    <div>
+      <h1 class="text-lg font-semibold text-slate-100">Diagnostics</h1>
+      <p class="mt-1 text-sm text-slate-500">
+        Trigger any SDK method directly and inspect the result or error. Switch the transport in the sidebar to test mock scenarios and typed failures.
+      </p>
+    </div>
+    <%= form_with url: playground_diagnostics_smoke_path, method: :post, local: true do %>
+      <%= hidden_field_tag :call, @selected_call_id %>
+      <%= button_tag "Run SDK Smoke", type: "submit", class: "rounded border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-400 transition-colors hover:bg-emerald-500/20 hover:text-emerald-300" %>
     <% end %>
-  </table>
-</div>
-
-<div class="card">
-  <h2>Configuration</h2>
-  <table>
-    <tr><th>Base URL</th>    <td><%= @config.base_url %></td></tr>
-    <tr><th>Keep-alive</th>  <td><span class="badge <%= @config.keep_alive? ? "badge-green" : "badge-red" %>"><%= @config.keep_alive? %></span></td></tr>
-    <tr><th>Pool size</th>   <td><%= @config.pool_size %></td></tr>
-    <tr><th>Read timeout</th><td><%= @config.read_timeout %>s</td></tr>
-    <tr><th>Max retries</th> <td><%= @config.max_retries %></td></tr>
-    <tr><th>SSL verify</th>  <td><%= @config.ssl_verify %></td></tr>
-    <tr><th>User-Agent</th>  <td><code style="font-size:11px"><%= @config.user_agent %></code></td></tr>
-  </table>
-</div>
-
-<% if @rotator_stats %>
-  <div class="card">
-    <h2>URL Rotator</h2>
-    <table>
-      <tr><th>Total URLs</th>    <td><%= @rotator_stats[:total] %></td></tr>
-      <tr><th>Available</th>     <td><%= @rotator_stats[:available] %></td></tr>
-      <tr><th>Failed (cooldown)</th><td><%= Array(@rotator_stats[:failed]).join(", ").presence || "none" %></td></tr>
-    </table>
   </div>
-<% end %>
+
+  <div class="flex items-start gap-3 rounded-lg border <%= playground_mock_active? ? 'border-amber-800/40 bg-amber-500/5' : 'border-slate-800 bg-slate-900' %> p-4 text-sm">
+    <div class="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-current opacity-80"></div>
+    <div>
+      <div class="font-medium text-slate-200"><%= playground_transport_label %></div>
+      <div class="mt-0.5 text-xs text-slate-500">
+        <%= playground_transport_description %>. Open timeout <%= @config.open_timeout %>s, read timeout <%= @config.read_timeout %>s, retries <%= @config.max_retries %>.
+      </div>
+    </div>
+    <% if !playground_mock_active? && !playground_api_key_present? %>
+      <div class="ml-auto text-xs text-amber-500">No API key — authenticated calls will fail until one is set</div>
+    <% end %>
+  </div>
+
+  <div class="grid min-h-[500px] gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+    <div class="flex flex-col rounded-xl border border-slate-800 bg-slate-900 p-5 shadow-sm">
+      <h2 class="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">SDK Method</h2>
+      <div class="flex-1 space-y-2 overflow-y-auto pr-2">
+        <% @calls.each do |call| %>
+          <% selected = call[:id] == @selected_call_id %>
+          <div class="rounded-lg border p-3 transition-colors <%= selected ? 'border-cyan-700/50 bg-cyan-950/40' : 'border-slate-800 hover:border-slate-700 hover:bg-slate-800/40' %>">
+            <%= link_to(playground_diagnostics_path(call: call[:id]), class: "block") do %>
+              <div class="flex items-start gap-3">
+                <div class="flex-1">
+                  <div class="break-all font-mono text-xs text-slate-200"><%= call[:label] %></div>
+                  <div class="mt-0.5 break-words text-[11px] leading-5 text-slate-500"><%= call[:description] %></div>
+                </div>
+                <% if call[:mutation] %>
+                  <span class="shrink-0 rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-400">mutation</span>
+                <% end %>
+                <% if call[:requires_auth] %>
+                  <span class="shrink-0 rounded bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-400">auth</span>
+                <% end %>
+              </div>
+            <% end %>
+
+            <% if selected %>
+              <div class="mt-3 border-t border-slate-800/40 pt-3">
+                <%= form_with url: playground_diagnostics_run_path, method: :post, local: true do %>
+                  <%= hidden_field_tag :call, call[:id] %>
+                  <% if call[:mutation] || call[:payload] %>
+                    <div class="mb-3 space-y-2">
+                      <label class="block text-[10px] font-medium uppercase tracking-wider text-slate-500">Payload JSON</label>
+                      <%= text_area_tag :payload_json,
+                                        @payload_json,
+                                        rows: 8,
+                                        spellcheck: false,
+                                        class: "w-full rounded-lg border border-slate-800 bg-slate-950/80 px-3 py-2 font-mono text-[11px] leading-5 text-slate-200 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
+                      <p class="text-[11px] leading-5 text-slate-500">Top-level JSON keys are forwarded as Ruby keyword arguments. For <code class="text-slate-400">services.session.stop</code>, include <code class="text-slate-400">uuid</code>. For <code class="text-slate-400">idle_jobs.*</code>, include <code class="text-slate-400">node_id</code> and <code class="text-slate-400">job_id</code>.</p>
+                    </div>
+                  <% end %>
+                  <%= button_tag "Run Method", type: "submit", class: "w-full rounded border border-cyan-500/20 bg-cyan-500/10 py-1.5 text-xs font-medium text-cyan-400 transition-colors hover:bg-cyan-500/20 hover:text-cyan-300" %>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="flex flex-col space-y-3 rounded-xl border border-slate-800 bg-slate-900 p-5 shadow-sm">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Result</h2>
+        <% if @result[:duration_ms] %>
+          <span class="tabular-nums text-[11px] text-slate-600"><%= @result[:duration_ms] %>ms</span>
+        <% end %>
+      </div>
+
+      <% case @result[:status] %>
+      <% when :idle %>
+        <p class="text-xs text-slate-600">Press Run to execute the selected method.</p>
+      <% when :smoke %>
+        <% smoke = @result[:data] %>
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="h-1.5 w-1.5 rounded-full <%= smoke[:status] == 'passed' ? 'bg-emerald-500' : 'bg-amber-500' %>"></span>
+            <span class="text-xs font-medium <%= smoke[:status] == 'passed' ? 'text-emerald-400' : 'text-amber-400' %>">
+              SDK Smoke <%= smoke[:status] == "passed" ? "passed" : "finished with failures" %>
+            </span>
+          </div>
+          <div class="grid grid-cols-1 gap-2 text-xs sm:grid-cols-3">
+            <div class="rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2">
+              <div class="text-[10px] uppercase tracking-wider text-slate-500">Total</div>
+              <div class="mt-1 font-mono text-slate-200"><%= smoke.dig(:summary, :total) %></div>
+            </div>
+            <div class="rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2">
+              <div class="text-[10px] uppercase tracking-wider text-slate-500">Passed</div>
+              <div class="mt-1 font-mono text-emerald-400"><%= smoke.dig(:summary, :passed) %></div>
+            </div>
+            <div class="rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2">
+              <div class="text-[10px] uppercase tracking-wider text-slate-500">Failed</div>
+              <div class="mt-1 font-mono <%= smoke.dig(:summary, :failed).to_i.zero? ? 'text-slate-200' : 'text-amber-400' %>"><%= smoke.dig(:summary, :failed) %></div>
+            </div>
+          </div>
+          <%= render "playground/shared/json_viewer", data: smoke %>
+        </div>
+      <% when :success %>
+        <div class="space-y-2">
+          <div class="flex items-center gap-2">
+            <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+            <span class="text-xs font-medium text-emerald-400">Success</span>
+          </div>
+          <div class="grid grid-cols-1 gap-2 text-xs <%= @result[:response].request_id.present? ? 'sm:grid-cols-2' : '' %>">
+            <div class="rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2">
+              <div class="text-[10px] uppercase tracking-wider text-slate-500">Status</div>
+              <div class="mt-1 font-mono text-slate-200"><%= @result[:response].status %></div>
+            </div>
+            <% if @result[:response].request_id.present? %>
+              <div class="rounded-lg border border-slate-800 bg-slate-950/70 px-3 py-2">
+                <div class="text-[10px] uppercase tracking-wider text-slate-500">Request ID</div>
+                <div class="mt-1 break-all font-mono text-slate-200"><%= @result[:response].request_id %></div>
+              </div>
+            <% end %>
+          </div>
+          <%= render "playground/shared/json_viewer", data: @result[:data] %>
+        </div>
+      <% when :error %>
+        <%= render "playground/shared/error_card", error: @result[:error] %>
+      <% end %>
+    </div>
+  </div>
+</div>

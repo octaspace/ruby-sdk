@@ -15,7 +15,7 @@ module OctaSpace
       # @param params [Hash] optional filter/pagination params
       # @return [OctaSpace::Response]
       def list(**params)
-        get("/nodes", params: params)
+        get("/nodes", params:)
       end
 
       # Fetch a single node by ID
@@ -23,7 +23,7 @@ module OctaSpace
       # @param id [Integer, String]
       # @return [OctaSpace::Response]
       def find(id)
-        get("/nodes/#{id}")
+        get("/nodes/#{encode(id)}")
       end
 
       # Download node identity file (binary response)
@@ -31,7 +31,7 @@ module OctaSpace
       # @param id [Integer, String]
       # @return [OctaSpace::Response]
       def download_ident(id)
-        get("/nodes/#{id}/ident")
+        get("/nodes/#{encode(id)}/ident")
       end
 
       # Download node logs (binary response)
@@ -39,24 +39,24 @@ module OctaSpace
       # @param id [Integer, String]
       # @return [OctaSpace::Response]
       def download_logs(id)
-        get("/nodes/#{id}/logs")
+        get("/nodes/#{encode(id)}/logs")
       end
 
       # Update node pricing
-      # PUT /nodes/:id/prices
+      # PATCH /nodes/:id/prices
       # @param id [Integer, String]
       # @param prices [Hash] e.g. { gpu_hour: 0.5, cpu_hour: 0.1 }
       # @return [OctaSpace::Response]
       def update_prices(id, **prices)
-        put("/nodes/#{id}/prices", body: prices)
+        patch("/nodes/#{encode(id)}/prices", body: prices)
       end
 
       # Reboot a node
-      # POST /nodes/:id/reboot
+      # GET /nodes/:id/reboot
       # @param id [Integer, String]
       # @return [OctaSpace::Response]
       def reboot(id)
-        post("/nodes/#{id}/reboot")
+        get("/nodes/#{encode(id)}/reboot")
       end
     end
   end

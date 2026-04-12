@@ -2,24 +2,16 @@
 
 module OctaSpace
   module Resources
-    # Network statistics endpoints
+    # Network information endpoint
     #
     # @example
-    #   client.network.stats
-    #   client.network.power
+    #   client.network.info
     class Network < Base
-      # Fetch network statistics
-      # GET /network/stats
+      # Fetch combined network information (blockchain, market, nodes, power, etc.)
+      # GET /network
       # @return [OctaSpace::Response]
-      def stats
-        get("/network/stats")
-      end
-
-      # Fetch network power metrics
-      # GET /network/power
-      # @return [OctaSpace::Response]
-      def power
-        get("/network/power")
+      def info
+        get("/network")
       end
     end
   end

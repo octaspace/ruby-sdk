@@ -1,32 +1,83 @@
-<h1>Nodes</h1>
+<% nodes_data = @nodes.respond_to?(:data) ? Array(@nodes.data) : [] %>
+<% nodes_error = @nodes if @nodes.is_a?(OctaSpace::Error) %>
+<% selected_error = @selected_node if @selected_node.is_a?(OctaSpace::Error) %>
+<% selected_node_data = @selected_node.respond_to?(:data) ? @selected_node.data : nil %>
 
-<% if @error %>
-  <div class="error"><%= @error %></div>
-<% elsif @nodes.data.present? %>
-  <div class="card">
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th><th>IP</th><th>State</th><th>Location</th><th>GPU</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% Array(@nodes.data).each do |node| %>
-          <tr>
-            <td><%= node["id"] %></td>
-            <td><%= node["ip"] %></td>
-            <td>
-              <span class="badge <%= node["state"] == "online" ? "badge-green" : "badge-red" %>">
-                <%= node["state"] %>
-              </span>
-            </td>
-            <td><%= node.dig("location", "city") %>, <%= node.dig("location", "country") %></td>
-            <td><%= node.dig("system", "gpu") %></td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
+<div class="space-y-6">
+  <div class="flex items-start justify-between gap-4">
+    <div>
+      <h1 class="text-lg font-semibold text-slate-100">Nodes</h1>
+      <p class="mt-1 text-sm text-slate-500">
+        <code class="text-cyan-400">octa_client.nodes.list</code> + <code class="text-cyan-400">octa_client.nodes.find(id)</code> — click a row to load detail.
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <% if playground_mock_active? %>
+        <span class="rounded bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-400">Mock: <%= playground_mock_scenario %></span>
+      <% end %>
+      <%= link_to "Refetch", playground_nodes_path(request.query_parameters.except("selected_id", "node_tab")), class: "rounded border border-slate-700 px-3 py-1.5 text-xs text-slate-400 transition-colors hover:border-slate-600 hover:text-slate-200" %>
+    </div>
   </div>
-<% else %>
-  <div class="card"><p style="color:#888">No nodes found.</p></div>
-<% end %>
+
+  <% if nodes_error %>
+    <%= render "playground/shared/error_card", error: nodes_error %>
+  <% elsif nodes_data.any? %>
+    <div class="grid gap-6 <%= selected_node_data || selected_error ? 'grid-cols-1 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]' : 'grid-cols-1' %>">
+      <div class="overflow-hidden rounded-xl border border-slate-800 bg-slate-900">
+        <div class="flex items-center justify-between border-b border-slate-800 px-4 py-3">
+          <span class="text-xs font-medium text-slate-400"><%= nodes_data.length %> nodes</span>
+          <% if selected_node_data || selected_error %>
+            <%= link_to "Close detail", playground_nodes_path(request.query_parameters.except("selected_id", "node_tab")), class: "text-xs text-slate-500 transition-colors hover:text-slate-300" %>
+          <% end %>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="border-b border-slate-800 text-[11px] uppercase tracking-wider text-slate-500">
+                <th class="px-3 py-2 text-left font-medium">ID</th>
+                <th class="px-3 py-2 text-left font-medium">Location</th>
+                <th class="px-3 py-2 text-left font-medium">CPU</th>
+                <th class="px-3 py-2 text-left font-medium">GPU</th>
+                <th class="px-3 py-2 text-left font-medium">RAM</th>
+                <th class="px-3 py-2 text-left font-medium">State</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% nodes_data.each do |node| %>
+                <% gpu_entries = Array(node.dig("system", "gpus") || node.dig("data", "gpus")) %>
+                <% gpu_count = gpu_entries.length %>
+                <% gpu_model = gpu_entries.first&.dig("model") || node.dig("system", "gpu") || node.dig("system", "gpu_model") || "—" %>
+                <% ram_bytes = node.dig("system", "memory", "size") || node.dig("system", "memory") || node.dig("data", "memory_size") || node.dig("system", "ram") %>
+                <% location = [node.dig("location", "city"), node.dig("location", "country")].compact.reject(&:blank?).join(", ") %>
+                <% selected = @selected_node_id.to_s == node["id"].to_s %>
+                <tr onclick="window.location='<%= playground_nodes_path(request.query_parameters.merge(selected_id: node["id"])) %>'" class="cursor-pointer border-b border-slate-800 text-xs transition-colors hover:bg-slate-800/60 <%= selected ? 'bg-slate-800/80' : '' %>">
+                  <td class="px-3 py-2.5 font-mono text-slate-300">
+                    <%= node["id"] %>
+                  </td>
+                  <td class="px-3 py-2.5 text-slate-400"><%= location.presence || "—" %></td>
+                  <td class="px-3 py-2.5 text-slate-400"><%= node.dig("system", "cpu_cores") || node.dig("data", "cpu_cores") || "—" %> cores</td>
+                  <td class="px-3 py-2.5 text-slate-400"><%= gpu_count.positive? ? "#{gpu_count}× " : "" %><span class="text-slate-300"><%= gpu_model %></span></td>
+                  <td class="px-3 py-2.5 tabular-nums text-slate-400"><%= ram_bytes.is_a?(Numeric) && ram_bytes > 1024 ? "#{(ram_bytes.to_f / 1024 / 1024 / 1024).round} GB" : (ram_bytes.present? ? "#{ram_bytes} GB" : "—") %></td>
+                  <td class="px-3 py-2.5">
+                    <span class="inline-block rounded px-1.5 py-0.5 text-[10px] font-medium <%= %w[active online].include?(node["state"].to_s) ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700 text-slate-400' %>"><%= node["state"] || "unknown" %></span>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <% if selected_error %>
+        <%= render "playground/shared/error_card", error: selected_error %>
+      <% elsif selected_node_data %>
+        <%= render "playground/shared/node_detail_panel",
+                   node: selected_node_data,
+                   close_path: playground_nodes_path(request.query_parameters.except("selected_id", "node_tab")) %>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="rounded-xl border border-dashed border-slate-800 bg-slate-900/30 px-6 py-12 text-center text-sm text-slate-500">No nodes found.</div>
+  <% end %>
+</div>

@@ -16,7 +16,7 @@ module OctaSpace
       # @param params [Hash] optional filter params
       # @return [OctaSpace::Response]
       def list(**params)
-        get("/sessions", params: params)
+        get("/sessions", params:)
       end
     end
   end

@@ -1,0 +1,20 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+$LOAD_PATH.unshift File.expand_path("../lib", __dir__)
+
+require "minitest/autorun"
+
+# Run with: bin/test [test/octaspace/client_test.rb] [--name test_foo]
+# Or simply: bin/test (runs all tests)
+
+ARGV.unshift "test" unless ARGV.any? { |a| File.exist?(a) || a.start_with?("-") }
+
+pattern = ARGV.first&.start_with?("-") ? "test/**/*_test.rb" : nil
+
+if pattern
+  Dir[pattern].each { |f| require File.expand_path(f) }
+else
+  require "bundler/setup"
+  load File.expand_path("../Rakefile", __dir__)
+end

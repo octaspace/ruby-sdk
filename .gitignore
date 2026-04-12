@@ -6,9 +6,12 @@
 /pkg/
 /spec/reports/
 /tmp/
+.tmp/
 *.gem
 *.rbc
 .env
 .env.*
 Gemfile.lock
 gemfiles/*.lock
+.claude/
+.vscode/

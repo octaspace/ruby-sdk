@@ -1,0 +1,5 @@
+[
+  {"timestamp": "2026-04-11T08:00:01Z", "level": "info",  "message": "Container started"},
+  {"timestamp": "2026-04-11T08:00:05Z", "level": "info",  "message": "Model loaded"},
+  {"timestamp": "2026-04-11T08:01:00Z", "level": "debug", "message": "First inference complete"}
+]

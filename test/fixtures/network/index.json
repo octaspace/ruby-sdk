@@ -1,0 +1,26 @@
+{
+  "blockchain": {
+    "blocktime": 12.77,
+    "circulating_supply": 42115431,
+    "era": "Vega",
+    "height": 9299385
+  },
+  "market_price": 0.104,
+  "marketplace": {
+    "gpus": {
+      "NVIDIA GeForce RTX 3090": { "avg_price": 0.09, "count": 61 },
+      "NVIDIA GeForce RTX 4090": { "avg_price": 0.17, "count": 31 }
+    }
+  },
+  "nodes": {
+    "online": 98,
+    "total": 120
+  },
+  "power": {
+    "total_tflops": 5100.5,
+    "utilized_tflops": 3200.0
+  },
+  "platform": {
+    "total_jobs": 412
+  }
+}

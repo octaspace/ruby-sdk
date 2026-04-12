@@ -12,8 +12,8 @@ module StubHelpers
   def stub_get(path, fixture_path:, status: 200)
     stub_request(:get, "#{BASE_URL}#{path}")
       .to_return(
-        status:  status,
-        body:    fixture(fixture_path),
+        status: status,
+        body: fixture(fixture_path),
         headers: json_headers
       )
   end
@@ -25,8 +25,8 @@ module StubHelpers
   def stub_post(path, fixture_path: nil, status: 200, body: nil)
     stub_request(:post, "#{BASE_URL}#{path}")
       .to_return(
-        status:  status,
-        body:    fixture_path ? fixture(fixture_path) : (body || "{}"),
+        status: status,
+        body: fixture_path ? fixture(fixture_path) : (body || "{}"),
         headers: json_headers
       )
   end
@@ -39,8 +39,8 @@ module StubHelpers
   def stub_error(method, path, status:, message: "Error")
     stub_request(method, "#{BASE_URL}#{path}")
       .to_return(
-        status:  status,
-        body:    {error: message}.to_json,
+        status: status,
+        body: {error: message}.to_json,
         headers: json_headers
       )
   end

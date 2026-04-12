@@ -1,0 +1,7 @@
+{
+  "total_nodes": 120,
+  "online_nodes": 98,
+  "total_gpu_count": 310,
+  "available_gpu_count": 45,
+  "regions": ["EU", "US", "APAC"]
+}

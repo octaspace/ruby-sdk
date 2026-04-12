@@ -1,40 +1,176 @@
 <!DOCTYPE html>
-<html>
+<html class="dark">
   <head>
     <title>OctaSpace SDK Playground</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <style>
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0a0a0a; color: #fafafa; }
-      nav { background: #070607; border-bottom: 1px solid #3d3d3d; padding: 12px 24px; display: flex; gap: 24px; align-items: center; }
-      nav a { color: #fafafa; text-decoration: none; font-size: 14px; opacity: 0.7; }
-      nav a:hover, nav a.active { opacity: 1; color: #B11995; }
-      nav .brand { font-weight: 700; opacity: 1; font-size: 16px; }
-      main { padding: 24px; max-width: 1200px; margin: 0 auto; }
-      h1 { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
-      h2 { font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #B11995; }
-      pre { background: #000; border: 1px solid #3d3d3d; border-radius: 8px; padding: 16px; font-size: 12px; overflow-x: auto; line-height: 1.5; }
-      .card { background: #171717; border: 1px solid #3d3d3d; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
-      .error { background: #2d0a0a; border-color: #7f1d1d; color: #fca5a5; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; }
-      .badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 11px; font-weight: 600; }
-      .badge-green { background: #052e16; color: #4ade80; }
-      .badge-red { background: #2d0a0a; color: #f87171; }
-      table { width: 100%; border-collapse: collapse; font-size: 13px; }
-      th { text-align: left; padding: 8px 12px; background: transparent; color: #888; font-weight: 500; border-bottom: 1px solid #3d3d3d; }
-      td { padding: 8px 12px; border-bottom: 1px solid #1a1a1a; }
-      tr:hover td { background: rgba(255,255,255,0.03); }
-    </style>
+    <%= csrf_meta_tags %>
+    <link rel="stylesheet" href="<%= playground_asset_path("playground.css") %>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="<%= playground_asset_path("playground.js") %>" defer></script>
   </head>
-  <body>
-    <nav>
-      <span class="brand">⬡ OctaSpace SDK</span>
-      <%= link_to "Account",     playground_account_path %>
-      <%= link_to "Nodes",       playground_nodes_path %>
-      <%= link_to "Sessions",    playground_sessions_path %>
-      <%= link_to "Diagnostics", playground_diagnostics_path %>
-    </nav>
-    <main>
-      <%= yield %>
-    </main>
+  <body class="h-screen overflow-hidden bg-slate-950 font-sans text-slate-100 antialiased selection:bg-cyan-900 selection:text-cyan-50">
+    <div class="flex h-screen bg-slate-950">
+      <aside class="flex w-64 shrink-0 flex-col border-r border-slate-800 bg-slate-900">
+        <div class="border-b border-slate-800 px-6 py-5">
+          <%= link_to root_path, class: "block rounded-lg transition-colors hover:bg-slate-800/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/60" do %>
+            <div class="flex items-center gap-3 px-2 py-1">
+              <svg class="h-6 w-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+              </svg>
+              <div>
+                <div class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-100">OctaSpace</div>
+                <div class="text-[11px] text-slate-400">SDK Playground</div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <nav class="flex-1 space-y-1 p-4 overflow-y-auto">
+          <% 
+            nav_base = "flex items-center justify-between rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-200"
+            nav_inactive = "#{nav_base} text-slate-400 hover:bg-slate-800 hover:text-slate-100"
+            nav_active = "#{nav_base} bg-slate-800/80 text-cyan-400 font-semibold shadow-inner"
+            
+            nav_links = [
+              { name: "Dashboard", path: playground_dashboard_path, badge: nil },
+              { name: "Network", path: playground_network_path, badge: "public" },
+              { name: "Apps", path: playground_apps_path, badge: nil },
+              { name: "Nodes", path: playground_nodes_path, badge: nil },
+              { name: "Sessions", path: playground_sessions_path, badge: nil },
+              { name: "Services", path: playground_services_path, badge: nil },
+              { name: "Idle Jobs", path: playground_idle_jobs_path, badge: nil },
+              { name: "Diagnostics", path: playground_diagnostics_path, badge: "mock" }
+            ]
+          %>
+          
+          <% nav_links.each do |link| %>
+            <% active_class = current_page?(link[:path]) || (request.path.start_with?(link[:path]) && link[:path] != playground_dashboard_path) ? nav_active : nav_inactive %>
+            <%= link_to(link[:path], class: active_class) do %>
+              <span><%= link[:name] %></span>
+              <% if link[:badge] == "public" %>
+                <span class="text-[10px] font-medium uppercase tracking-wider text-emerald-400"><%= link[:badge] %></span>
+              <% elsif link[:badge] == "mock" %>
+                <span class="text-[10px] font-medium uppercase tracking-wider text-violet-400"><%= link[:badge] %></span>
+              <% end %>
+            <% end %>
+          <% end %>
+        </nav>
+
+        <div class="border-t border-slate-800 p-4">
+          <%= form_with url: playground_settings_path, method: :patch, local: true, class: "space-y-4" do %>
+            <%= hidden_field_tag :return_to, request.fullpath %>
+
+            <div>
+              <label class="mb-1.5 block text-[10px] font-medium uppercase tracking-wider text-slate-500">API Key</label>
+              <div class="relative">
+                <%= password_field_tag :api_key,
+                                       playground_config.api_key.to_s,
+                                       placeholder: "Enter API key…",
+                                       data: { autosubmit_setting: true, initial_value: playground_config.api_key.to_s },
+                                       class: "w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-200 placeholder:text-slate-600 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
+                <span class="absolute right-3 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full <%= playground_api_key_present? ? 'bg-emerald-500' : 'bg-slate-600' %>"></span>
+              </div>
+            </div>
+
+            <div>
+              <label class="mb-1.5 block text-[10px] font-medium uppercase tracking-wider text-slate-500">Transport</label>
+              <%= select_tag :mock_scenario,
+                             options_for_select(playground_mock_scenarios.map { |scenario| [scenario[:label], scenario[:value]] }, playground_mock_scenario),
+                             data: { autosubmit_setting: true, initial_value: playground_mock_scenario },
+                             class: "w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-200 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
+              <% if playground_mock_active? %>
+                <p class="mt-1 text-[10px] text-amber-400">Mock active — requests intercepted before they reach the API</p>
+              <% else %>
+                <p class="mt-1 text-[10px] text-slate-500"><%= playground_transport_description %></p>
+              <% end %>
+            </div>
+
+            <div>
+              <label class="mb-1.5 block text-[10px] font-medium uppercase tracking-wider text-slate-500">Base URL</label>
+              <%= text_field_tag :base_url,
+                                 playground_config.urls.first,
+                                 data: { autosubmit_setting: true, initial_value: playground_config.urls.first },
+                                 class: "w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 font-mono text-xs text-slate-200 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500" %>
+            </div>
+          <% end %>
+
+          <div class="mt-4 space-y-2 border-t border-slate-800 pt-4 text-[11px] text-slate-500">
+            <div class="flex items-center justify-between gap-3">
+              <span>Transport</span>
+              <span class="font-mono text-slate-300"><%= playground_transport_label %></span>
+            </div>
+            <div class="flex items-center justify-between gap-3">
+              <span>Timeouts</span>
+              <span class="font-mono text-slate-300"><%= playground_timeout_label %></span>
+            </div>
+            <div class="flex items-center justify-between gap-3">
+              <span>Retries</span>
+              <span class="font-mono text-slate-300"><%= playground_config.max_retries %></span>
+            </div>
+            <div class="flex items-center justify-between gap-3">
+              <span>Pool size</span>
+              <span class="font-mono text-slate-300"><%= playground_config.pool_size %></span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <div class="flex min-w-0 flex-1 flex-col">
+        <main class="flex-1 min-w-0 overflow-y-auto p-6">
+          <div class="w-full max-w-full">
+            <%= yield %>
+          </div>
+        </main>
+
+        <section class="h-36 shrink-0 border-t border-slate-800 bg-slate-900/60">
+          <div class="flex h-full flex-col">
+            <div class="flex items-center justify-between gap-3 border-b border-slate-800 px-4 py-2">
+              <div class="flex items-center gap-2">
+                <h2 class="text-sm font-medium text-slate-200">Request Log</h2>
+                <div class="rounded-full bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-400 tabular-nums"><%= @request_log&.length || 0 %></div>
+              </div>
+              <% if @request_log.present? %>
+                <%= button_to "Clear", playground_request_log_path, method: :delete, form: { class: "inline" }, class: "text-xs text-slate-500 transition-colors hover:text-slate-300" %>
+              <% end %>
+            </div>
+
+            <% if @request_log.present? %>
+              <div class="flex-1 overflow-auto">
+                <table class="min-w-full text-left text-xs">
+                  <thead>
+                    <tr class="border-b border-slate-800 text-[10px] uppercase tracking-wider text-slate-500">
+                      <th class="px-4 py-2 font-medium">Method</th>
+                      <th class="px-4 py-2 font-medium">Path</th>
+                      <th class="px-4 py-2 font-medium">Status</th>
+                      <th class="px-4 py-2 font-medium">Duration</th>
+                      <th class="px-4 py-2 font-medium">Time</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% @request_log.reverse_each do |entry| %>
+                      <tr class="border-b border-slate-800/60 text-slate-300">
+                        <td class="px-4 py-2"><span class="rounded bg-slate-800 px-1.5 py-0.5 font-mono text-[10px] text-cyan-400"><%= entry["method"] %></span></td>
+                        <td class="max-w-[28rem] px-4 py-2 font-mono text-slate-400"><span class="block truncate" title="<%= entry["path"] || entry["label"] || "—" %>"><%= entry["path"] || entry["label"] || "—" %></span></td>
+                        <td class="px-4 py-2">
+                          <% if entry["error"].present? %>
+                            <span class="rounded bg-rose-500/20 px-1.5 py-0.5 font-mono text-[10px] text-rose-400" title="<%= entry["error"] %>">ERR</span>
+                          <% else %>
+                            <span class="font-mono <%= entry["status"].to_i.between?(200, 299) ? 'text-emerald-400' : 'text-rose-400' %>"><%= entry["status"] %></span>
+                          <% end %>
+                        </td>
+                        <td class="px-4 py-2 font-mono text-slate-400"><%= entry["duration_ms"] %>ms</td>
+                        <td class="px-4 py-2 font-mono text-slate-500"><%= playground_format_short_time(entry["timestamp"]) %></td>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                </table>
+              </div>
+            <% else %>
+              <div class="flex flex-1 items-center justify-center px-4 text-sm text-slate-500">No requests yet</div>
+            <% end %>
+          </div>
+        </section>
+      </div>
+    </div>
   </body>
 </html>

@@ -1,0 +1,50 @@
+presets:
+  services.mr.create:
+    source:
+      script: js-sdk/packages/sdk/scripts/session-test.ts
+      note: Mirrors the live MR session payload used by the JS SDK smoke script.
+    payload:
+      node_id: 1
+      disk_size: 10
+      image: ubuntu:24.04
+      app: 249b4cb3-3db1-4c06-98a4-772ba88cd81c
+
+  services.render.create:
+    source:
+      schema: services_render_request
+      note: Matches the current OCTA OpenAPI render request schema.
+    payload:
+      node_id: 1
+      disk_size: 100
+
+  services.vpn.create:
+    source:
+      script: js-sdk/packages/sdk/scripts/session-test.ts
+      note: Mirrors the live VPN session payload used by the JS SDK smoke script.
+    payload:
+      node_id: 1
+      subkind: wg
+
+  services.session.stop:
+    source:
+      script: js-sdk/packages/sdk/scripts/session-test.ts
+      note: Matches the stop flow exercised in the JS SDK live session test.
+    payload:
+      uuid: sess-abc-123
+      score: 5
+
+  idle_jobs.find:
+    source:
+      fixture: test/fixtures/idle_jobs/show.json
+      note: Parameter preset for fetching a specific idle job by node and job identifiers.
+    payload:
+      node_id: 69
+      job_id: 42
+
+  idle_jobs.logs:
+    source:
+      fixture: test/fixtures/idle_jobs/logs.json
+      note: Parameter preset for fetching idle job logs by node and job identifiers.
+    payload:
+      node_id: 69
+      job_id: 42

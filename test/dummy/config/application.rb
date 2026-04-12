@@ -12,7 +12,8 @@ require "octaspace"
 
 module Dummy
   class Application < Rails::Application
-    config.load_defaults 8.0
+    config.root = File.expand_path("..", __dir__)
+    config.load_defaults [Rails::VERSION::MAJOR, Rails::VERSION::MINOR].join(".")
     config.eager_load    = false
     config.secret_key_base = "dummy_secret_key_base_for_playground_only"
     config.logger = Logger.new($stdout)

@@ -1,0 +1,80 @@
+<% apps_data = @apps.respond_to?(:data) ? Array(@apps.data) : [] %>
+<% apps_error = @apps if @apps.is_a?(OctaSpace::Error) %>
+
+<div class="w-full max-w-full space-y-6">
+  <div class="flex items-start justify-between gap-4">
+    <div>
+      <h1 class="text-lg font-semibold text-slate-100">Apps</h1>
+      <p class="mt-1 text-sm text-slate-500">
+        <code class="text-cyan-400">octa_client.apps.list</code> — available application catalog for service sessions.
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <% if playground_mock_active? %>
+        <span class="rounded bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-400">Mock: <%= playground_mock_scenario %></span>
+      <% end %>
+      <%= link_to "Refetch", playground_apps_path(request.query_parameters), class: "rounded border border-slate-700 px-3 py-1.5 text-xs text-slate-400 transition-colors hover:border-slate-600 hover:text-slate-200" %>
+    </div>
+  </div>
+
+  <% if apps_error %>
+    <%= render "playground/shared/error_card", error: apps_error %>
+  <% elsif apps_data.any? %>
+    <div class="overflow-hidden rounded-xl border border-slate-800 bg-slate-900">
+      <div class="flex items-center justify-between border-b border-slate-800 px-4 py-3">
+        <span class="text-xs font-medium text-slate-400"><%= apps_data.length %> apps</span>
+        <code class="text-[11px] text-violet-400">octa_client.apps.list</code>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-left text-xs">
+          <thead>
+            <tr class="border-b border-slate-800 text-[11px] uppercase tracking-wider text-slate-500">
+              <th class="px-3 py-2 font-medium">Name</th>
+              <th class="px-3 py-2 font-medium">Category</th>
+              <th class="px-3 py-2 font-medium">UUID</th>
+              <th class="px-3 py-2 font-medium">Image</th>
+              <th class="px-3 py-2 text-right font-medium">Ports</th>
+              <th class="px-3 py-2 text-right font-medium">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% apps_data.each do |app| %>
+              <% app_uuid = app["uuid"].presence %>
+              <% app_image = app["image"].presence || app["docker_image"].presence %>
+              <tr class="border-b border-slate-800/60 text-slate-300 transition-colors hover:bg-slate-800/40">
+                <td class="px-3 py-2.5">
+                  <div class="font-medium text-slate-200"><%= app["name"] || "—" %></div>
+                  <% if app["description"].present? %>
+                    <div class="mt-1 max-w-xl text-[11px] leading-5 text-slate-500"><%= app["description"] %></div>
+                  <% end %>
+                </td>
+                <td class="px-3 py-2.5 text-slate-400"><%= app["category"] || "—" %></td>
+                <td class="px-3 py-2.5 font-mono text-slate-400" title="<%= app["uuid"] %>"><%= app["uuid"].presence || "—" %></td>
+                <td class="px-3 py-2.5 font-mono text-slate-400"><%= app["image"] || app["docker_image"] || "—" %></td>
+                <td class="px-3 py-2.5 text-right text-slate-400">
+                  <%= [Array(app["ports"]).length, Array(app["http_ports"]).length].sum %>
+                </td>
+                <td class="px-3 py-2.5 text-right">
+                  <% if app_uuid.present? %>
+                    <%= link_to "Use in MR Create",
+                                playground_diagnostics_preset_path("services.mr.create", app: app_uuid, image: app_image),
+                                class: "inline-flex items-center rounded border border-cyan-500/20 bg-cyan-500/10 px-2.5 py-1 text-[11px] font-medium text-cyan-400 transition-colors hover:bg-cyan-500/20 hover:text-cyan-300" %>
+                  <% else %>
+                    <span class="text-[11px] text-slate-600">No UUID</span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
+      <div class="mb-2 text-[11px] font-medium uppercase tracking-wider text-slate-500">Raw JSON</div>
+      <%= render "playground/shared/json_viewer", data: apps_data, max_height: "max-h-80" %>
+    </div>
+  <% else %>
+    <div class="rounded-xl border border-dashed border-slate-800 bg-slate-900/30 px-6 py-12 text-center text-sm text-slate-500">No apps found.</div>
+  <% end %>
+</div>

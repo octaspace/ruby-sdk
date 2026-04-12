@@ -6,12 +6,12 @@ class OctaSpace::ConfigurationTest < Minitest::Test
   def test_defaults
     config = OctaSpace::Configuration.new
     assert_equal "https://api.octa.space", config.base_url
-    assert_equal 10,    config.open_timeout
-    assert_equal 30,    config.read_timeout
+    assert_equal 10, config.open_timeout
+    assert_equal 30, config.read_timeout
     assert_equal false, config.keep_alive
-    assert_equal 5,     config.pool_size
-    assert_equal 2,     config.max_retries
-    assert_equal true,  config.ssl_verify
+    assert_equal 5, config.pool_size
+    assert_equal 2, config.max_retries
+    assert_equal true, config.ssl_verify
   end
 
   def test_keep_alive_predicate
@@ -36,14 +36,14 @@ class OctaSpace::ConfigurationTest < Minitest::Test
 
   def test_urls_base_urls_takes_priority
     config = OctaSpace::Configuration.new
-    config.base_url  = "https://api.octa.space"
+    config.base_url = "https://api.octa.space"
     config.base_urls = ["https://a.octa.space", "https://b.octa.space"]
     assert_equal ["https://a.octa.space", "https://b.octa.space"], config.urls
   end
 
   def test_dup_creates_independent_copy
     config = OctaSpace::Configuration.new
-    copy   = config.dup
+    copy = config.dup
     copy.api_key = "different"
     assert_nil config.api_key
   end
@@ -56,7 +56,7 @@ class OctaSpace::ConfigurationTest < Minitest::Test
 
   def test_configure_block
     OctaSpace.configure do |c|
-      c.api_key    = "my_key"
+      c.api_key = "my_key"
       c.keep_alive = true
     end
     assert_equal "my_key", OctaSpace.configuration.api_key

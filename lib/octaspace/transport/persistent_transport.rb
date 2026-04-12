@@ -19,9 +19,9 @@ module OctaSpace
     #   )
     class PersistentTransport < FaradayTransport
       def initialize(config)
-        super
-        @pools       = {}
+        @pools = {}
         @pools_mutex = Mutex.new
+        super
       end
 
       # @return [Hash] connection pool diagnostics per URL
@@ -36,7 +36,7 @@ module OctaSpace
       # Shut down all connection pools gracefully
       def shutdown
         @pools_mutex.synchronize do
-          @pools.each_value(&:shutdown)
+          @pools.each_value { |pool| pool.shutdown { |_conn| nil } }
           @pools.clear
         end
       end
@@ -64,7 +64,7 @@ module OctaSpace
       end
 
       def build_pool(base_url)
-        pool_size    = config.pool_size
+        pool_size = config.pool_size
         pool_timeout = config.pool_timeout
 
         ::ConnectionPool.new(size: pool_size, timeout: pool_timeout) do
@@ -74,11 +74,11 @@ module OctaSpace
 
       def build_persistent_connection(base_url)
         Faraday.new(url: base_url, request: request_options, ssl: ssl_options) do |f|
-          f.request  :json
-          f.request  :retry, retry_options
+          f.request :json
+          f.request :retry, retry_options
           f.response :json, content_type: /\bjson/
           f.response :logger, config.logger, {headers: true, bodies: false} if config.logger
-          f.adapter  :net_http_persistent, pool_size: config.pool_size do |http|
+          f.adapter :net_http_persistent, pool_size: config.pool_size do |http|
             http.idle_timeout = config.idle_timeout
           end
         end

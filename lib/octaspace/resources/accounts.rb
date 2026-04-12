@@ -21,6 +21,13 @@ module OctaSpace
       def balance
         get("/accounts/balance")
       end
+
+      # Generate / create a new wallet for the authenticated user
+      # POST /accounts
+      # @return [OctaSpace::Response]
+      def generate_wallet
+        post("/accounts")
+      end
     end
   end
 end
