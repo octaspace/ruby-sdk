@@ -12,8 +12,8 @@ jobs:
     environment: rubygems
 
     permissions:
-      contents: read
-      id-token: write  # for trusted publishing (rubygems OIDC)
+      contents: write  # required for rake release to push the git tag
+      id-token: write  # required for OIDC trusted publishing
 
     steps:
       - uses: actions/checkout@v4
@@ -26,8 +26,5 @@ jobs:
       - name: Run tests before publishing
         run: bundle exec rake test
 
-      - name: Build gem
-        run: gem build octaspace.gemspec
-
-      - name: Push to RubyGems
+      - name: Release gem
         uses: rubygems/release-gem@v1
