@@ -1,20 +1,49 @@
-<% mr_data = @mr_sessions.respond_to?(:data) ? Array(@mr_sessions.data) : [] %>
-<% render_data = @render_sessions.respond_to?(:data) ? Array(@render_sessions.data) : [] %>
-<% vpn_data = @vpn_sessions.respond_to?(:data) ? Array(@vpn_sessions.data) : [] %>
+<% mr_data = @mr_catalog.respond_to?(:data) ? Array(@mr_catalog.data) : [] %>
+<% render_data = @render_catalog.respond_to?(:data) ? Array(@render_catalog.data) : [] %>
+<% vpn_data = @vpn_catalog.respond_to?(:data) ? Array(@vpn_catalog.data) : [] %>
 <% tabs = [
-  {id: "mr", label: "Machine Rental", hook: "octa_client.services.mr.list", path: "/services/mr", data: mr_data, error: (@mr_sessions if @mr_sessions.is_a?(OctaSpace::Error))},
-  {id: "render", label: "Render", hook: "octa_client.services.render.list", path: "/services/render", data: render_data, error: (@render_sessions if @render_sessions.is_a?(OctaSpace::Error))},
-  {id: "vpn", label: "VPN", hook: "octa_client.services.vpn.list", path: "/services/vpn", data: vpn_data, error: (@vpn_sessions if @vpn_sessions.is_a?(OctaSpace::Error))}
+  {id: "mr", label: "Machine Rental Marketplace", hook: "octa_client.services.mr.list", path: "/services/mr", data: mr_data, error: (@mr_catalog if @mr_catalog.is_a?(OctaSpace::Error))},
+  {id: "render", label: "Render Marketplace", hook: "octa_client.services.render.list", path: "/services/render", data: render_data, error: (@render_catalog if @render_catalog.is_a?(OctaSpace::Error))},
+  {id: "vpn", label: "VPN Relay Marketplace", hook: "octa_client.services.vpn.list", path: "/services/vpn", data: vpn_data, error: (@vpn_catalog if @vpn_catalog.is_a?(OctaSpace::Error))}
 ] %>
 <% active = tabs.find { |tab| tab[:id] == @active_tab } || tabs.first %>
 <% active_status = active[:error] ? "error" : "success" %>
+<%
+  offer_label = lambda do |tab_id, item|
+    case tab_id
+    when "vpn"
+      item["residential"] ? "Residential" : "Datacenter"
+    else
+      item["gpu"].presence || item["gpus"]&.first&.dig("model") || "CPU"
+    end
+  end
+
+  pricing_label = lambda do |tab_id, item|
+    case tab_id
+    when "vpn"
+      usd = item["traffic_price_usd"]
+      ether = item["traffic_price_ether"]
+      parts = []
+      parts << "$#{usd}/GB" if usd.present?
+      parts << "#{ether} ETH/GB" if ether.present?
+      parts.presence&.join(" · ") || "—"
+    else
+      base = item["base_usd"] || item["base"]
+      traffic = item["traffic_usd"] || item["traffic"]
+      parts = []
+      parts << "$#{base}/hr" if base.present?
+      parts << "$#{traffic}/GB" if traffic.present?
+      parts.presence&.join(" · ") || "—"
+    end
+  end
+%>
 
 <div class="w-full max-w-full space-y-6">
   <div class="flex items-start justify-between gap-4">
     <div>
       <h1 class="text-lg font-semibold text-slate-100">Services</h1>
       <p class="mt-1 text-sm text-slate-500">
-        Available resources for each service type. Uses the Ruby SDK client against the currently selected transport.
+        Marketplace catalog endpoints for MR, Render, and VPN. Uses the Ruby SDK client against the currently selected transport.
       </p>
     </div>
     <div class="flex items-center gap-3">
@@ -27,6 +56,10 @@
 
   <div class="rounded-lg border border-amber-800/40 bg-amber-500/5 px-4 py-3 text-xs text-amber-400">
     Start mutations (<code>mr.create</code>, <code>render.create</code>, <code>vpn.create</code>) exist on <code>octa_client.services.*</code> but are intentionally not wired up here — use Diagnostics for manual request inspection.
+  </div>
+
+  <div class="rounded-lg border border-slate-800 bg-slate-900/50 px-4 py-3 text-xs text-slate-400">
+    Bandwidth below is normalized for display with <code class="text-slate-300">OctaSpace::PayloadHelpers.normalize_marketplace_bandwidth</code> when live payload values look like raw bytes-per-second. Raw JSON remains unchanged below.
   </div>
 
   <div class="overflow-hidden rounded-xl border border-slate-800 bg-slate-900">
@@ -55,6 +88,37 @@
           <div class="text-xs text-slate-500">
             <%= active[:data].is_a?(Array) ? "#{active[:data].length} items" : "#{active[:data].to_h.keys.length} keys" %>
           </div>
+          <% if active[:data].is_a?(Array) && active[:data].any? %>
+            <div class="overflow-hidden rounded-lg border border-slate-800 bg-slate-950/40">
+              <div class="border-b border-slate-800 px-4 py-3 text-[11px] uppercase tracking-wider text-slate-500">Marketplace Summary</div>
+              <div class="overflow-x-auto">
+                <table class="min-w-full text-left text-xs">
+                  <thead>
+                    <tr class="border-b border-slate-800 text-[11px] uppercase tracking-wider text-slate-500">
+                      <th class="px-3 py-2 font-medium">Node</th>
+                      <th class="px-3 py-2 font-medium">Location</th>
+                      <th class="px-3 py-2 font-medium">Offer</th>
+                      <th class="px-3 py-2 font-medium">Bandwidth ↓/↑</th>
+                      <th class="px-3 py-2 font-medium">Pricing</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% active[:data].each do |item| %>
+                      <tr class="border-b border-slate-800/60 text-slate-300 transition-colors hover:bg-slate-800/40">
+                        <td class="px-3 py-2.5 tabular-nums text-slate-200">#<%= item["node_id"] || "—" %></td>
+                        <td class="px-3 py-2.5 text-slate-400"><%= [item["city"], item["country"]].compact_blank.join(", ").presence || "—" %></td>
+                        <td class="px-3 py-2.5 text-slate-400"><%= offer_label.call(active[:id], item) %></td>
+                        <td class="px-3 py-2.5 tabular-nums text-slate-400">
+                          <%= playground_format_mbps(item["net_down_mbits"]) %> / <%= playground_format_mbps(item["net_up_mbits"]) %>
+                        </td>
+                        <td class="px-3 py-2.5 tabular-nums text-slate-400"><%= pricing_label.call(active[:id], item) %></td>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          <% end %>
           <div class="overflow-hidden rounded-lg border border-slate-800 bg-slate-950/40">
             <%= render "playground/shared/json_viewer", data: active[:data], max_height: "max-h-[32rem]" %>
           </div>

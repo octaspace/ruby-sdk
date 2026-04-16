@@ -19,9 +19,11 @@ class OctaSpace::SessionsResourceTest < Minitest::Test
   def test_list_passes_params
     stub_request(:get, "#{StubHelpers::BASE_URL}/sessions")
       .with(query: {"recent" => "true"})
-      .to_return(status: 200, body: "[]", headers: json_headers)
+      .to_return(status: 200, body: fixture("sessions/recent.json"), headers: json_headers)
     response = @client.sessions.list(recent: true)
     assert response.success?
+    assert_equal "28", response.data.first["duration"]
+    assert_equal "0", response.data.first["rx"]
   end
 
   def test_list_raises_authentication_error_on_401

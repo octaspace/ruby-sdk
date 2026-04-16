@@ -23,4 +23,11 @@ class OctaSpace::Playground::PayloadPresetsTest < Minitest::Test
     assert_includes json, "\"uuid\""
     assert_equal({"uuid" => "sess-abc-123", "score" => 5}, JSON.parse(json))
   end
+
+  def test_logs_preset_defaults_to_recent_finished_session_flow
+    payload = OctaSpace::Playground::PayloadPresets.payload_for("services.session.logs")
+
+    assert_equal "sess-abc-123", payload[:uuid]
+    assert_equal true, payload[:recent]
+  end
 end

@@ -19,6 +19,7 @@ class ApplicationController < ActionController::Base
     :playground_format_bytes,
     :playground_format_datetime,
     :playground_format_duration,
+    :playground_format_mbps,
     :playground_format_short_time,
     :playground_json,
     :playground_json_html,
@@ -188,6 +189,13 @@ class ApplicationController < ActionController::Base
     end
 
     format("%.1f %s", bytes, units[index])
+  end
+
+  def playground_format_mbps(value)
+    normalized = OctaSpace::PayloadHelpers.normalize_marketplace_bandwidth(value)
+    return "—" if normalized.blank?
+
+    format("%.1f Mbps", normalized)
   end
 
   def playground_format_datetime(value)

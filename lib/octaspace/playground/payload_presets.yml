@@ -33,6 +33,14 @@ presets:
       uuid: sess-abc-123
       score: 5
 
+  services.session.logs:
+    source:
+      live_api:
+        note: Uses the finished-session recent logs branch confirmed against the live API.
+    payload:
+      uuid: sess-abc-123
+      recent: true
+
   idle_jobs.find:
     source:
       fixture: test/fixtures/idle_jobs/show.json

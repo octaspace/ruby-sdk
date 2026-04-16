@@ -59,6 +59,12 @@
     </div>
   <% end %>
 
+  <% if active_recent %>
+    <div class="rounded-lg border border-slate-800 bg-slate-900/50 px-4 py-3 text-xs text-slate-400">
+      Recent session payloads may serialize telemetry like <code class="text-slate-300">duration</code>, <code class="text-slate-300">rx</code>, and <code class="text-slate-300">tx</code> as strings. For finished-session logs, use Diagnostics with <code class="text-slate-300">services.session.logs</code> and <code class="text-slate-300">recent: true</code>.
+    </div>
+  <% end %>
+
   <div class="overflow-hidden rounded-xl border border-slate-800 bg-slate-900">
     <div class="flex gap-1 border-b border-slate-800 px-4 pt-2">
       <% tabs.each do |tab| %>

@@ -2,6 +2,7 @@
 
 require "octaspace/version"
 require "octaspace/errors"
+require "octaspace/payload_helpers"
 require "octaspace/response"
 require "octaspace/configuration"
 require "octaspace/middleware/url_rotator"

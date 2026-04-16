@@ -30,7 +30,7 @@ module Playground
       {
         id: "apps.list",
         label: "octa_client.apps.list",
-        description: "GET /apps — requires API key",
+        description: "GET /apps — requires API key; live API may serialize ports/http_ports as JSON strings",
         method: "GET",
         path: "/apps",
         requires_auth: true
@@ -72,15 +72,24 @@ module Playground
       {
         id: "sessions.list.recent",
         label: "octa_client.sessions.list(recent: true)",
-        description: "GET /sessions?recent=true — requires API key",
+        description: "GET /sessions?recent=true — requires API key; live telemetry fields may be serialized as strings",
         method: "GET",
         path: "/sessions?recent=true",
         requires_auth: true
       },
       {
+        id: "services.session.logs",
+        label: "octa_client.services.session(uuid).logs",
+        description: "GET /services/:uuid/logs — for finished sessions use recent=true",
+        method: "GET",
+        path: "/services/:uuid/logs",
+        requires_auth: true,
+        payload: true
+      },
+      {
         id: "services.mr.list",
         label: "octa_client.services.mr.list",
-        description: "GET /services/mr — requires API key",
+        description: "GET /services/mr — requires API key; returns marketplace machine catalog",
         method: "GET",
         path: "/services/mr",
         requires_auth: true
@@ -88,7 +97,7 @@ module Playground
       {
         id: "services.render.list",
         label: "octa_client.services.render.list",
-        description: "GET /services/render — requires API key",
+        description: "GET /services/render — requires API key; returns render marketplace catalog",
         method: "GET",
         path: "/services/render",
         requires_auth: true
@@ -96,7 +105,7 @@ module Playground
       {
         id: "services.vpn.list",
         label: "octa_client.services.vpn.list",
-        description: "GET /services/vpn — requires API key",
+        description: "GET /services/vpn — requires API key; returns VPN relay catalog",
         method: "GET",
         path: "/services/vpn",
         requires_auth: true
@@ -104,7 +113,7 @@ module Playground
       {
         id: "services.mr.create",
         label: "octa_client.services.mr.create",
-        description: "POST /services/mr — requires API key",
+        description: "POST /services/mr — requires API key; live API uses array payloads and may reject item-level with HTTP 200",
         method: "POST",
         path: "/services/mr",
         requires_auth: true,
@@ -218,6 +227,9 @@ module Playground
           octa_client.sessions.list
         when "sessions.list.recent"
           octa_client.sessions.list(recent: true)
+        when "services.session.logs"
+          uuid = payload.fetch(:uuid).to_s
+          octa_client.services.session(uuid).logs(recent: payload[:recent])
         when "services.mr.list"
           octa_client.services.mr.list
         when "services.render.list"
@@ -274,7 +286,7 @@ module Playground
 
     def validate_mutation_payload!(call, payload)
       case call[:id]
-      when "services.session.stop"
+      when "services.session.logs", "services.session.stop"
         raise OctaSpace::ValidationError.new("Payload must include a non-empty uuid") if payload[:uuid].to_s.strip.empty?
       when "idle_jobs.find", "idle_jobs.logs"
         raise OctaSpace::ValidationError.new("Payload must include node_id") if payload[:node_id].to_s.strip.empty?
@@ -284,6 +296,9 @@ module Playground
 
     def resolved_path(call, payload)
       case call[:id]
+      when "services.session.logs"
+        path = "/services/#{payload.fetch(:uuid)}/logs"
+        payload[:recent] ? "#{path}?recent=true" : path
       when "services.session.stop"
         "/services/#{payload.fetch(:uuid)}/stop"
       when "idle_jobs.find"

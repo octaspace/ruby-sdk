@@ -1,0 +1,13 @@
+[
+  {
+    "node_id": 9042,
+    "country": "Germany",
+    "city": "Frankfurt",
+    "gpu": "NVIDIA RTX A6000",
+    "net_down_mbits": 125000000,
+    "net_up_mbits": 62500000,
+    "base_usd": 1200,
+    "traffic_usd": 1,
+    "reliability": 99.5
+  }
+]

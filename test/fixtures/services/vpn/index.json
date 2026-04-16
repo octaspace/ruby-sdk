@@ -1,9 +1,12 @@
 [
   {
-    "uuid": "vpn-sess-222",
-    "node_id": 7,
-    "status": "active",
-    "ip": "10.8.0.2",
-    "started_at": "2026-04-11T09:00:00Z"
+    "node_id": 9539,
+    "country": "Poland",
+    "city": "Zakrzew",
+    "residential": false,
+    "net_down_mbits": 0,
+    "net_up_mbits": 0,
+    "traffic_price_usd": 0.005366743801677206,
+    "traffic_price_ether": 0.05
   }
 ]

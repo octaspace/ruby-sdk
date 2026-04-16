@@ -7,7 +7,9 @@
     "category": "AI",
     "image": "ubuntu:24.04",
     "docker_image": "octaspace/stable-diffusion:2.1",
-    "min_vram_gb": 8
+    "min_vram_gb": 8,
+    "ports": "[5000,6000]",
+    "http_ports": "[8080]"
   },
   {
     "id": 2,
@@ -17,6 +19,8 @@
     "category": "AI",
     "image": "ubuntu:22.04",
     "docker_image": "octaspace/comfyui:latest",
-    "min_vram_gb": 6
+    "min_vram_gb": 6,
+    "ports": "[]",
+    "http_ports": "[]"
   }
 ]

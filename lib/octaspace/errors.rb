@@ -24,6 +24,32 @@ module OctaSpace
   # API-level errors (HTTP response received, but indicates failure)
   class ApiError < Error; end
 
+  # Domain-level rejection where transport succeeded but the provision request
+  # was rejected by the API payload contract.
+  class ProvisionRejectedError < Error
+    attr_reader :rejections
+
+    def initialize(message = nil, response: nil, rejections: [])
+      @rejections = Array(rejections)
+      super(message || build_message(@rejections), response: response)
+    end
+
+    private
+
+    def build_message(rejections)
+      first_reason =
+        rejections.filter_map do |item|
+          next unless item.is_a?(Hash)
+
+          item["reason"] || item[:reason]
+        end.first
+
+      return "Provision request rejected" if first_reason.to_s.empty?
+
+      "Provision request rejected: #{first_reason}"
+    end
+  end
+
   # 401 Unauthorized
   class AuthenticationError < ApiError; end
 

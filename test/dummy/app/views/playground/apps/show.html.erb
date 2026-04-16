@@ -8,8 +8,18 @@
       <p class="mt-1 text-sm text-slate-500">
         <code class="text-cyan-400">octa_client.apps.list</code> — available application catalog for service sessions.
       </p>
+      <p class="mt-1 text-xs text-slate-500">
+        Port counts below normalize live payloads even when the API serializes <code class="text-slate-400">ports</code> and <code class="text-slate-400">http_ports</code> as JSON strings.
+      </p>
     </div>
     <div class="flex items-center gap-3">
+      <% if apps_data.any? %>
+        <button type="button"
+                data-scroll-target="apps-raw-json"
+                class="rounded border border-slate-700 px-3 py-1.5 text-xs text-slate-400 transition-colors hover:border-slate-600 hover:text-slate-200">
+          Raw JSON
+        </button>
+      <% end %>
       <% if playground_mock_active? %>
         <span class="rounded bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-400">Mock: <%= playground_mock_scenario %></span>
       <% end %>
@@ -52,7 +62,10 @@
                 <td class="px-3 py-2.5 font-mono text-slate-400" title="<%= app["uuid"] %>"><%= app["uuid"].presence || "—" %></td>
                 <td class="px-3 py-2.5 font-mono text-slate-400"><%= app["image"] || app["docker_image"] || "—" %></td>
                 <td class="px-3 py-2.5 text-right text-slate-400">
-                  <%= [Array(app["ports"]).length, Array(app["http_ports"]).length].sum %>
+                  <%= [
+                        OctaSpace::PayloadHelpers.parse_port_list(app["ports"]).length,
+                        OctaSpace::PayloadHelpers.parse_port_list(app["http_ports"]).length
+                      ].sum %>
                 </td>
                 <td class="px-3 py-2.5 text-right">
                   <% if app_uuid.present? %>
@@ -70,7 +83,9 @@
       </div>
     </div>
 
-    <div class="rounded-lg border border-slate-800 bg-slate-900/50 p-4">
+    <div id="apps-raw-json"
+         tabindex="-1"
+         class="rounded-lg border border-slate-800 bg-slate-900/50 p-4 focus:outline-none focus:ring-1 focus:ring-cyan-500/60">
       <div class="mb-2 text-[11px] font-medium uppercase tracking-wider text-slate-500">Raw JSON</div>
       <%= render "playground/shared/json_viewer", data: apps_data, max_height: "max-h-80" %>
     </div>
