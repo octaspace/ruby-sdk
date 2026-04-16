@@ -1,0 +1,13 @@
+[
+  {
+    "uuid": "5dd2d308-db91-4bda-86ff-e512d711b363",
+    "service": "mr",
+    "duration": "28",
+    "rx": "0",
+    "tx": "0",
+    "started_at": 1776161866303,
+    "finished_at": 1776161893995,
+    "charge_amount": 0,
+    "urls": {"8080": "https://sess-abc-123.octa.space"}
+  }
+]

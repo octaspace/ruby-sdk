@@ -31,9 +31,14 @@ module OctaSpace
 
         # Fetch session logs
         # GET /services/:uuid/logs
+        # @param recent [Boolean, nil] use the recent logs branch for finished sessions
         # @return [OctaSpace::Response]
-        def logs
-          @transport.get("/services/#{@uuid}/logs")
+        def logs(recent: nil)
+          params = {}
+          params[:recent] = true if recent
+          return @transport.get("/services/#{@uuid}/logs") if params.empty?
+
+          @transport.get("/services/#{@uuid}/logs", params:)
         end
 
         # Stop the session

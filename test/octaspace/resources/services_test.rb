@@ -28,11 +28,16 @@ class OctaSpace::ServicesResourceTest < Minitest::Test
     response = @client.services.mr.list
     assert response.success?
     assert_kind_of Array, response.data
-    assert_equal "mr-sess-111", response.data.first["uuid"]
+    assert_equal 9010, response.data.first["node_id"]
+    assert_equal "France", response.data.first["country"]
+    assert_kind_of Hash, response.data.first["reliability"]
   end
 
   def test_mr_create_returns_success
-    payload = OctaSpace::Playground::PayloadPresets.payload_for("services.mr.create")
+    payload = OctaSpace::Playground::PayloadPresets.payload_for("services.mr.create").merge(
+      organization_id: 77,
+      project_id: 88
+    )
     stub_request(:post, "#{StubHelpers::BASE_URL}/services/mr")
       .with(body: [
         {
@@ -45,13 +50,38 @@ class OctaSpace::ServicesResourceTest < Minitest::Test
           ports: [],
           http_ports: [],
           start_command: "",
-          entrypoint: ""
+          entrypoint: "",
+          organization_id: 77,
+          project_id: 88
         }
       ].to_json)
       .to_return(status: 201, body: '{"uuid":"new-sess","status":"starting"}', headers: json_headers)
 
     response = @client.services.mr.create(**payload)
     assert response.success?
+    assert_equal "new-sess", response.data["uuid"]
+  end
+
+  def test_mr_create_raises_api_error_on_400_object_rejection
+    payload = OctaSpace::Playground::PayloadPresets.payload_for("services.mr.create")
+    stub_request(:post, "#{StubHelpers::BASE_URL}/services/mr")
+      .to_return(status: 400, body: '{"message":"Node not found"}', headers: json_headers)
+
+    assert_raises(OctaSpace::ApiError) { @client.services.mr.create(**payload) }
+  end
+
+  def test_mr_create_raises_provision_rejected_error_on_batch_rejection
+    payload = OctaSpace::Playground::PayloadPresets.payload_for("services.mr.create")
+    stub_request(:post, "#{StubHelpers::BASE_URL}/services/mr")
+      .to_return(
+        status: 200,
+        body: '[{"id":0,"reason":"Node not found","status":1}]',
+        headers: json_headers
+      )
+
+    error = assert_raises(OctaSpace::ProvisionRejectedError) { @client.services.mr.create(**payload) }
+    assert_includes error.message, "Node not found"
+    assert_equal 1, error.rejections.length
   end
 
   def test_mr_list_raises_not_found_on_404
@@ -66,7 +96,8 @@ class OctaSpace::ServicesResourceTest < Minitest::Test
     response = @client.services.vpn.list
     assert response.success?
     assert_kind_of Array, response.data
-    assert_equal "vpn-sess-222", response.data.first["uuid"]
+    assert_equal 9539, response.data.first["node_id"]
+    refute response.data.first["residential"]
   end
 
   def test_vpn_create_returns_success
@@ -79,9 +110,10 @@ class OctaSpace::ServicesResourceTest < Minitest::Test
   # --- Render ---
 
   def test_render_list_returns_success
-    stub_get("/services/render", status: 200, fixture_path: "services/mr/index.json")
+    stub_get("/services/render", status: 200, fixture_path: "services/render/index.json")
     response = @client.services.render.list
     assert response.success?
+    assert_equal "NVIDIA RTX A6000", response.data.first["gpu"]
   end
 
   def test_render_create_returns_success
@@ -105,7 +137,18 @@ class OctaSpace::ServicesResourceTest < Minitest::Test
     stub_get("/services/sess-abc-123/logs", fixture_path: "services/session/logs.json")
     response = @client.services.session("sess-abc-123").logs
     assert response.success?
-    assert_kind_of Array, response.data
+    assert_kind_of Hash, response.data
+    assert_kind_of Array, response.data["system"]
+  end
+
+  def test_session_proxy_logs_with_recent_flag
+    stub_request(:get, "#{StubHelpers::BASE_URL}/services/sess-abc-123/logs")
+      .with(query: {"recent" => "true"})
+      .to_return(status: 200, body: fixture("services/session/logs.json"), headers: json_headers)
+
+    response = @client.services.session("sess-abc-123").logs(recent: true)
+    assert response.success?
+    assert_equal "", response.data["container"]
   end
 
   def test_session_proxy_stop

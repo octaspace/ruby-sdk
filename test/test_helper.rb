@@ -4,6 +4,7 @@ $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
 require "octaspace"
 require "octaspace/transport/mock_transport"
+require "octaspace/playground/payload_presets"
 require "minitest/autorun"
 require "minitest/mock"
 require "webmock/minitest"

@@ -9,7 +9,7 @@ module OctaSpace
       #   client.services.vpn.list
       #   client.services.vpn.create(node_id: 123)
       class Vpn < Base
-        # List active VPN sessions
+        # List available VPN relay nodes
         # GET /services/vpn
         # @param params [Hash] optional filter params
         # @return [OctaSpace::Response]

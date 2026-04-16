@@ -20,7 +20,7 @@ if (requested_tasks & %w[rdoc clobber_rdoc]).any?
   end
 end
 
-if (requested_tasks & %w[build install release]).any?
+if (requested_tasks & %w[build install]).any?
   require "bundler/gem_tasks"
 end
 

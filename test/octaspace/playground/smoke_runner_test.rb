@@ -16,12 +16,12 @@ class OctaSpace::Playground::SmokeRunnerTest < Minitest::Test
     stub_get("/apps", fixture_path: "apps/index.json")
     stub_get("/nodes", fixture_path: "nodes/index.json")
     stub_get("/services/mr", fixture_path: "services/mr/index.json")
-    stub_get("/services/render", fixture_path: "services/mr/index.json")
+    stub_get("/services/render", fixture_path: "services/render/index.json")
     stub_get("/services/vpn", fixture_path: "services/vpn/index.json")
     stub_get("/sessions", fixture_path: "sessions/index.json")
     stub_request(:get, "#{StubHelpers::BASE_URL}/sessions")
       .with(query: {"recent" => "true"})
-      .to_return(status: 200, body: fixture("sessions/index.json"), headers: json_headers)
+      .to_return(status: 200, body: fixture("sessions/recent.json"), headers: json_headers)
 
     result = OctaSpace::Playground::SmokeRunner.new(client: @client).run
 

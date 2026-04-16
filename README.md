@@ -62,23 +62,27 @@ client.sessions.list                                   # GET /sessions
 session = client.services.session("uuid-here")
 session.info                    # GET /services/:uuid/info
 session.logs                    # GET /services/:uuid/logs
+session.logs(recent: true)      # GET /services/:uuid/logs?recent=true for finished sessions
 session.stop(score: 5)          # POST /services/:uuid/stop
 
 # Services
-client.services.mr.list                                # GET /services/mr
+client.services.mr.list                                # GET /services/mr (marketplace machine catalog)
 client.services.mr.create(
   node_id: 1,
   disk_size: 10,
   image: "ubuntu:24.04",
   app: "249b4cb3-3db1-4c06-98a4-772ba88cd81c"
 )                                                     # POST /services/mr
-client.services.vpn.list                               # GET /services/vpn
+client.services.vpn.list                               # GET /services/vpn (VPN relay catalog)
 client.services.vpn.create(node_id: 1, subkind: "wg") # POST /services/vpn
 client.services.render.list                            # GET /services/render
 client.services.render.create(node_id: 1, disk_size: 100) # POST /services/render
 
 # Apps
 client.apps.list                                       # GET /apps
+
+# Note: live API may serialize app port lists as JSON strings
+# (for example "[]"). The raw response is preserved by the SDK.
 
 # Network
 client.network.info                                    # GET /network
@@ -269,9 +273,9 @@ Pages:
 |---|---|
 | `/playground/account` | Profile + balance |
 | `/playground/nodes` | Node list with state badges |
-| `/playground/sessions` | Active sessions |
-| `/playground/services` | Machine Rentals + VPN sessions |
-| `/playground/diagnostics` | Transport mode, pool stats, URL rotator state (auto-refresh every 5s) |
+| `/playground/sessions` | Current + recent sessions, including live-format quirks |
+| `/playground/services` | Marketplace catalogs for MR, Render, and VPN |
+| `/playground/diagnostics` | Direct SDK method runner for contracts, payloads, transport mode, and pool stats |
 
 ## Development
 
@@ -288,7 +292,7 @@ bundle exec rake test   # tests only
 You can verify the gem in a clean Ruby environment without Rails:
 
 1. Build the gem: `gem build octaspace.gemspec`
-2. Install it locally: `gem install ./octaspace-0.1.0.gem`
+2. Install it locally: `gem install ./octaspace-0.2.0.gem`
 3. Test in IRB:
 
 ```ruby
@@ -310,7 +314,7 @@ bundle exec appraisal rails-8-0 rake test
 
 ### Dummy Application (Playground)
 
-The repository includes a Rails "Dummy" application for manual testing and UI prototyping. It is located in `test/dummy`.`.
+The repository includes a Rails "Dummy" application for manual testing and UI prototyping. It is located in `test/dummy`.
 
 To run the dummy app:
 

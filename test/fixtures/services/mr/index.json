@@ -1,11 +1,21 @@
 [
   {
-    "uuid": "mr-sess-111",
-    "node_id": 5,
-    "app_id": 1,
-    "app_name": "Stable Diffusion",
-    "status": "running",
-    "started_at": "2026-04-11T10:00:00Z",
-    "urls": {"jupyter": "https://mr-sess-111.octa.space"}
+    "node_id": 9010,
+    "country": "France",
+    "city": "Paris",
+    "net_down_mbits": 872229553,
+    "net_up_mbits": 62488613,
+    "gpu": "NVIDIA GeForce RTX 5090",
+    "base_usd": 3400,
+    "traffic_usd": 1,
+    "reliability": {
+      "uptime": 100,
+      "rating": {"count": 0, "score": 0},
+      "s_avg_d": 10117,
+      "s_failed": 1,
+      "s_max_d": 366353,
+      "s_normal": 381,
+      "stability": 99.74
+    }
   }
 ]

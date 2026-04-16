@@ -1,5 +1,13 @@
-[
-  {"timestamp": "2026-04-11T08:00:01Z", "level": "info",  "message": "Container started"},
-  {"timestamp": "2026-04-11T08:00:05Z", "level": "info",  "message": "Model loaded"},
-  {"timestamp": "2026-04-11T08:01:00Z", "level": "debug", "message": "First inference complete"}
-]
+{
+  "system": [
+    {
+      "ts": 1776161866508,
+      "msg": "24.04: Pulling from library/ubuntu\nDigest: sha256:84e77dee7d1bc93fb029a45e3c6cb9d8aa4831ccfcc7103d36e876938d28895b\nStatus: Image is up to date for ubuntu:24.04\n"
+    },
+    {
+      "ts": 1776161866701,
+      "msg": "Container started\n"
+    }
+  ],
+  "container": ""
+}

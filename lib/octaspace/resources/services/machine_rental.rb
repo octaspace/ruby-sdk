@@ -14,7 +14,7 @@ module OctaSpace
       #     app: "249b4cb3-3db1-4c06-98a4-772ba88cd81c"
       #   )
       class MachineRental < Base
-        # List available / active machine rentals
+        # List available marketplace machines for rent
         # GET /services/mr
         # @param params [Hash] optional filter params
         # @return [OctaSpace::Response]
@@ -40,7 +40,37 @@ module OctaSpace
             entrypoint: attrs[:entrypoint].to_s
           }
 
-          post("/services/mr", body: [item])
+          item[:organization_id] = attrs[:organization_id] if attrs.key?(:organization_id)
+          item[:project_id] = attrs[:project_id] if attrs.key?(:project_id)
+
+          response = post("/services/mr", body: [item])
+          raise_if_rejected!(response)
+          response
+        end
+
+        private
+
+        def raise_if_rejected!(response)
+          rejections = extract_rejections(response.data)
+          return if rejections.empty?
+
+          raise OctaSpace::ProvisionRejectedError.new(response: response, rejections: rejections)
+        end
+
+        def extract_rejections(data)
+          return [] unless data.is_a?(Array)
+
+          data.filter_map do |item|
+            next unless item.is_a?(Hash)
+
+            reason = item["reason"] || item[:reason]
+            status = item["status"] || item[:status]
+            uuid = item["uuid"] || item[:uuid]
+            next if uuid
+            next unless reason || status.to_i.positive?
+
+            item
+          end
         end
       end
     end

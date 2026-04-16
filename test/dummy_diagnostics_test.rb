@@ -50,6 +50,22 @@ class DummyDiagnosticsTest < Minitest::Test
     assert_includes @session.response.body, "stopped"
   end
 
+  def test_diagnostics_run_executes_recent_session_logs_call
+    payload = OctaSpace::Playground::PayloadPresets.payload_for("services.session.logs")
+    stub_request(:get, "https://api.octa.space/services/sess-abc-123/logs")
+      .with(query: {"recent" => "true"})
+      .to_return(status: 200, body: fixture("services/session/logs.json"), headers: {"Content-Type" => "application/json"})
+
+    @session.patch("/playground/settings", params: {api_key: "test_key", mock_scenario: "real", return_to: "/playground/diagnostics"})
+    @session.post("/playground/diagnostics/run", params: {call: "services.session.logs", payload_json: JSON.pretty_generate(payload)})
+
+    assert_equal 200, @session.response.status
+    assert_includes @session.response.body, "Success"
+    assert_includes @session.response.body, "octa_client.services.session(uuid).logs"
+    assert_includes @session.response.body, "services/sess-abc-123/logs?recent=true"
+    assert_includes @session.response.body, "Container started"
+  end
+
   def test_diagnostics_run_reports_invalid_payload_json
     @session.patch("/playground/settings", params: {api_key: "test_key", mock_scenario: "real", return_to: "/playground/diagnostics"})
     @session.post("/playground/diagnostics/run", params: {call: "services.vpn.create", payload_json: "{not json}"})
@@ -73,14 +89,14 @@ class DummyDiagnosticsTest < Minitest::Test
     stub_request(:get, "https://api.octa.space/services/mr")
       .to_return(status: 200, body: fixture("services/mr/index.json"), headers: {"Content-Type" => "application/json"})
     stub_request(:get, "https://api.octa.space/services/render")
-      .to_return(status: 200, body: fixture("services/mr/index.json"), headers: {"Content-Type" => "application/json"})
+      .to_return(status: 200, body: fixture("services/render/index.json"), headers: {"Content-Type" => "application/json"})
     stub_request(:get, "https://api.octa.space/services/vpn")
       .to_return(status: 200, body: fixture("services/vpn/index.json"), headers: {"Content-Type" => "application/json"})
     stub_request(:get, "https://api.octa.space/sessions")
       .to_return(status: 200, body: fixture("sessions/index.json"), headers: {"Content-Type" => "application/json"})
     stub_request(:get, "https://api.octa.space/sessions")
       .with(query: {"recent" => "true"})
-      .to_return(status: 200, body: fixture("sessions/index.json"), headers: {"Content-Type" => "application/json"})
+      .to_return(status: 200, body: fixture("sessions/recent.json"), headers: {"Content-Type" => "application/json"})
 
     @session.patch("/playground/settings", params: {api_key: "test_key", mock_scenario: "real", return_to: "/playground/diagnostics"})
     @session.post("/playground/diagnostics/smoke", params: {call: "network.info"})
@@ -116,5 +132,15 @@ class DummyDiagnosticsTest < Minitest::Test
     assert_includes @session.response.body, "services.mr.create"
     assert_includes @session.response.body, "249b4cb3-3db1-4c06-98a4-772ba88cd81c"
     assert_includes @session.response.body, "ubuntu:24.04"
+  end
+
+  def test_diagnostics_show_marks_selected_card_for_scroll_restoration
+    @session.get("/playground/diagnostics", params: {call: "services.session.logs"})
+
+    assert_equal 200, @session.response.status
+    assert_includes @session.response.body, "data-diagnostics-list"
+    assert_includes @session.response.body, "data-diagnostics-item"
+    assert_includes @session.response.body, 'data-selected="true"'
+    assert_includes @session.response.body, "octa_client.services.session(uuid).logs"
   end
 end

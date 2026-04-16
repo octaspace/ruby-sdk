@@ -15,6 +15,8 @@ class OctaSpace::AppsResourceTest < Minitest::Test
     assert_kind_of Array, response.data
     assert_equal 2, response.data.size
     assert_equal "Stable Diffusion", response.data.first["name"]
+    assert_equal "[5000,6000]", response.data.first["ports"]
+    assert_equal "[8080]", response.data.first["http_ports"]
   end
 
   def test_list_passes_params
