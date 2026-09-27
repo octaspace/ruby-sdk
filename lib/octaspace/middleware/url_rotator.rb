@@ -11,7 +11,7 @@ module OctaSpace
     # @example
     #   rotator = OctaSpace::Middleware::UrlRotator.new([
     #     "https://api.octa.space",
-    #     "https://api2.octa.space"
+    #     "https://api.octa.computer"
     #   ])
     #
     #   url = rotator.next_url

@@ -21,7 +21,7 @@ module OctaSpace
   # @example Multiple API endpoints with failover
   #   client = OctaSpace::Client.new(
   #     api_key:   ENV["OCTA_API_KEY"],
-  #     base_urls: ["https://api.octa.space", "https://api2.octa.space"]
+  #     base_urls: ["https://api.octa.space", "https://api.octa.computer"]
   #   )
   #
   # @example Without API key (public endpoints only)

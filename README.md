@@ -178,7 +178,7 @@ client.shutdown
 ```ruby
 client = OctaSpace::Client.new(
   api_key:   ENV["OCTA_API_KEY"],
-  base_urls: ["https://api.octa.space", "https://api2.octa.space"]
+  base_urls: ["https://api.octa.space", "https://api.octa.computer"]
 )
 ```
 
