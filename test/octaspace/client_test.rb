@@ -5,14 +5,10 @@ require "test_helper"
 class OctaSpace::ClientTest < Minitest::Test
   def test_initializes_all_resources
     client = test_client
-    assert_instance_of OctaSpace::Resources::Accounts, client.accounts
-    assert_instance_of OctaSpace::Resources::Nodes, client.nodes
-    assert_instance_of OctaSpace::Resources::Sessions, client.sessions
-    assert_instance_of OctaSpace::Resources::Apps, client.apps
-    assert_instance_of OctaSpace::Resources::Network, client.network
-    assert_instance_of OctaSpace::Resources::Compute, client.compute
-    assert_instance_of OctaSpace::Resources::Render, client.render
-    assert_instance_of OctaSpace::Resources::IdleJobs, client.idle_jobs
+    {accounts: "Accounts", compute: "Compute", hosting: "Hosting", network: "Network",
+     render: "Render", sessions: "Sessions", stats: "Stats"}.each do |reader, name|
+      assert_instance_of OctaSpace::Resources.const_get(name), client.public_send(reader)
+    end
   end
 
   def test_uses_standard_transport_by_default

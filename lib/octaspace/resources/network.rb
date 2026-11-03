@@ -2,16 +2,18 @@
 
 module OctaSpace
   module Resources
-    # Network information endpoint
+    # Public platform statistics; no API key needed
     #
     # @example
-    #   client.network.info
+    #   client.network.info.nodes.online
     class Network < Base
-      # Fetch combined network information (blockchain, market, nodes, power, etc.)
+      # Platform statistics snapshot.
       # GET /network
-      # @return [OctaSpace::Response]
+      #
+      # Raises {OctaSpace::ServiceUnavailableError} while it is unavailable.
+      # @return [OctaSpace::Types::Network]
       def info
-        get("/network", auth: :none)
+        Types::Network.new(get("/network", auth: :none).data)
       end
     end
   end
