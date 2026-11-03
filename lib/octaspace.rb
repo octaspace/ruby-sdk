@@ -28,7 +28,7 @@ require "octaspace/client"
 
 # OctaSpace Ruby SDK
 #
-# Official Ruby client for the OctaSpace API.
+# Official Ruby client for the next-generation OctaSpace API.
 # Supports standard and keep-alive (persistent) connection modes,
 # automatic URL rotation/failover, retry with exponential backoff,
 # and optional Rails integration.
@@ -39,10 +39,10 @@ require "octaspace/client"
 #   end
 #
 #   client = OctaSpace.client
-#   client.nodes.list
+#   client.compute.list
 #   client.accounts.balance
 #
-# @see https://api.octa.space/api-docs
+# @see https://api-dev.octa.space/swagger
 module OctaSpace
   class << self
     # Global configuration object

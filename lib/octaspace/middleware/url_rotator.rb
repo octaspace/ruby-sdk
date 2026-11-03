@@ -10,13 +10,13 @@ module OctaSpace
     #
     # @example
     #   rotator = OctaSpace::Middleware::UrlRotator.new([
-    #     "https://api.octa.space",
-    #     "https://api2.octa.space"
+    #     "https://api-dev.octa.space",
+    #     "https://mirror.example"
     #   ])
     #
     #   url = rotator.next_url
     #   rotator.mark_failed(url)
-    #   rotator.stats # => { total: 2, available: 1, failed: ["https://api.octa.space"] }
+    #   rotator.stats # => { total: 2, available: 1, failed: ["https://api-dev.octa.space"] }
     class UrlRotator
       # Seconds a failed URL is excluded from rotation
       FAILURE_COOLDOWN = 30

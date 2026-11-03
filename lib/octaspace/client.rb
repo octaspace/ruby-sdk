@@ -8,7 +8,7 @@ module OctaSpace
   #
   # @example Standard mode (default)
   #   client = OctaSpace::Client.new(api_key: ENV["OCTA_API_KEY"])
-  #   client.nodes.list
+  #   client.compute.list
   #   client.accounts.balance
   #
   # @example Keep-alive mode (persistent connections + pool)
@@ -21,7 +21,7 @@ module OctaSpace
   # @example Multiple API endpoints with failover
   #   client = OctaSpace::Client.new(
   #     api_key:   ENV["OCTA_API_KEY"],
-  #     base_urls: ["https://api.octa.space", "https://api2.octa.space"]
+  #     base_urls: ["https://api-dev.octa.space", "https://mirror.example"]
   #   )
   #
   # @example Without API key (public endpoints only)

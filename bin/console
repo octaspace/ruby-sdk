@@ -9,7 +9,7 @@ require "octaspace"
 #
 # Example:
 #   client = OctaSpace::Client.new(api_key: ENV["OCTA_API_KEY"])
-#   client.nodes.list
+#   client.compute.list
 
 require "irb"
 IRB.start(__FILE__)

@@ -80,3 +80,27 @@ jobs:
       # Fails on any advisory for the resolved gems (fresh advisory database each run).
       - name: bundler-audit
         run: bundle exec bundle-audit check --update
+
+  smoke:
+    name: Smoke test (live API)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Only after a merge: pull requests from forks must not reach the live API with the secret.
+    if: github.event_name == 'push'
+    needs: test
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1.336.0
+        with:
+          ruby-version: "4.0"
+          bundler-cache: true
+
+      # Read-only. Without the OCTA_API_KEY secret only the public checks run.
+      - name: Smoke
+        env:
+          OCTA_API_KEY: ${{ secrets.OCTA_API_KEY }}
+        run: bin/smoke

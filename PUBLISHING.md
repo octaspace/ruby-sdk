@@ -35,7 +35,7 @@ gem build octaspace.gemspec    # builds without warnings
 Install the built gem outside the project and confirm it loads correctly:
 
 ```bash
-gem install ./octaspace-0.2.0.gem
+gem install ./octaspace-0.3.0.gem
 ruby -e "require 'octaspace'; p OctaSpace::Client.new"
 ```
 
@@ -55,24 +55,24 @@ Use these alternatives to verify the gem before publishing:
 
 - **Inspect gem contents:**
   ```bash
-  gem unpack octaspace-0.2.0.gem --target=/tmp/octaspace-check
+  gem unpack octaspace-0.3.0.gem --target=/tmp/octaspace-check
   find /tmp/octaspace-check -type f | sort
   rm -rf /tmp/octaspace-check
   ```
 - **Check metadata that RubyGems.org will display:**
   ```bash
-  gem specification octaspace-0.2.0.gem
+  gem specification octaspace-0.3.0.gem
   ```
 - **Install and test in a clean environment:**
   ```bash
-  gem install ./octaspace-0.2.0.gem
+  gem install ./octaspace-0.3.0.gem
   ruby -e "require 'octaspace'; p OctaSpace::Client.new; puts OctaSpace::VERSION"
   ```
 
 ## 4. Publish to RubyGems.org
 
 ```bash
-gem push octaspace-0.2.0.gem
+gem push octaspace-0.3.0.gem
 ```
 
 You will be prompted for credentials on first push. The API key is saved to `~/.gem/credentials`.
@@ -80,6 +80,6 @@ You will be prompted for credentials on first push. The API key is saved to `~/.
 ## 5. Post-publish
 
 - Verify the gem page at [rubygems.org/gems/octaspace](https://rubygems.org/gems/octaspace).
-- Tag the exact published commit: `git tag v0.2.0 && git push origin v0.2.0`.
-- Create the GitHub Release manually from tag `v0.2.0`.
+- Tag the exact published commit: `git tag v0.3.0 && git push origin v0.3.0`.
+- Create the GitHub Release manually from tag `v0.3.0`.
 - Bump `lib/octaspace/version.rb` for the next development cycle in a follow-up commit.
