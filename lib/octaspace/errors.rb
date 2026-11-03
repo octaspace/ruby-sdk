@@ -82,17 +82,6 @@ module OctaSpace
 
   class GatewayTimeoutError < ServerError; end # 504
 
-  # Legacy batch-style rejection of services.mr.create (removed with that resource)
-  class ProvisionRejectedError < Error
-    attr_reader :rejections
-
-    def initialize(message = nil, response: nil, rejections: [])
-      @rejections = Array(rejections)
-      reason = @rejections.filter_map { |item| item["reason"] if item.is_a?(Hash) }.first
-      super(message || (reason ? "Provision request rejected: #{reason}" : "Provision request rejected"), response: response)
-    end
-  end
-
   # HTTP status code → exception class mapping
   STATUS_ERRORS = {
     400 => ValidationError,
