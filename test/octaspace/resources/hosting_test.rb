@@ -11,7 +11,7 @@ class OctaSpace::HostingResourceTest < Minitest::Test
   end
 
   def test_nodes
-    stub_get("/hosting/nodes", fixture_path: "next/hosting_nodes.json")
+    stub_get("/hosting/nodes", fixture_path: "hosting_nodes.json")
     node = @client.hosting.nodes.find { |n| n.number == "M95S-WZG8-7" }
 
     assert node.idle?

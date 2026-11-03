@@ -6,7 +6,7 @@ module OctaSpace
     #
     # @example
     #   client.hosting.nodes.each { |node| puts "#{node.number} #{node.status}" }
-    #   client.hosting.set_prices("M95S-WZG8-7", base: OctaSpace::Money.from_usd("0.25"))
+    #   client.hosting.set_prices("7KQ4-M2XD-4", base: OctaSpace::Money.from_usd("0.25"))
     class Hosting < Base
       PRICE_FIELDS = %i[base storage traffic min_rent_minutes].freeze
 

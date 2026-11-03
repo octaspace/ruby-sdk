@@ -12,7 +12,7 @@ class OctaSpace::StatsResourceTest < Minitest::Test
 
   def test_gpu_current
     stub_request(:get, "#{BASE}/stats/gpu/current").with(query: {"verified" => "yes"})
-      .to_return(status: 200, body: fixture("next/stats_gpu_current.json"))
+      .to_return(status: 200, body: fixture("stats_gpu_current.json"))
     market = @client.stats.gpu_current(verified: :yes)
 
     gpu = market.gpus.first
@@ -34,7 +34,7 @@ class OctaSpace::StatsResourceTest < Minitest::Test
     from = Time.at(1_793_000_000)
     stub_request(:get, "#{BASE}/stats/gpu/history")
       .with(query: {"gpu_name" => "Arc B580,NVIDIA GeForce RTX 3090", "start" => "1793000000", "end" => "1793086400", "step" => "3600"})
-      .to_return(status: 200, body: fixture("next/stats_gpu_history.json"))
+      .to_return(status: 200, body: fixture("stats_gpu_history.json"))
 
     history = @client.stats.gpu_history(gpu_name: ["Arc B580", "NVIDIA GeForce RTX 3090"], from: from, to: 1_793_086_400, step: 3600)
     arc = history.fetch("Arc B580")
@@ -57,7 +57,7 @@ class OctaSpace::StatsResourceTest < Minitest::Test
   end
 
   def test_gpu_locations
-    stub_get("/stats/gpu/locations", fixture_path: "next/stats_gpu_locations.json")
+    stub_get("/stats/gpu/locations", fixture_path: "stats_gpu_locations.json")
     loc = @client.stats.gpu_locations.first
 
     assert_equal "Mukachevo", loc.city

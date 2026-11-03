@@ -33,7 +33,7 @@ module OctaSpace
       # available", …) raise {OctaSpace::ValidationError}. Never retried
       # automatically: a start costs money.
       #
-      # @param node_number [String] node number from the listing, e.g. "M95S-WZG8-7"
+      # @param node_number [String] node number from the listing, e.g. "7KQ4-M2XD-4"
       #   (case, dashes and spaces are ignored by the API)
       # @param image [String] container image, e.g. "ubuntu:24.04"
       # @param app [String, nil] application uuid

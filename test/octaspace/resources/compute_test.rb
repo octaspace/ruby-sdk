@@ -14,7 +14,7 @@ class OctaSpace::ComputeResourceTest < Minitest::Test
   # --- list ---
 
   def test_list_returns_machines_from_live_fixture
-    stub_get("/services/compute", fixture_path: "next/services_compute.json")
+    stub_get("/services/compute", fixture_path: "services_compute.json")
     machines = @client.compute.list
 
     assert_equal 3, machines.size
@@ -32,7 +32,7 @@ class OctaSpace::ComputeResourceTest < Minitest::Test
   end
 
   def test_list_turns_null_strings_into_nil
-    stub_get("/services/compute", fixture_path: "next/services_compute.json")
+    stub_get("/services/compute", fixture_path: "services_compute.json")
     arc = @client.compute.list.find { |x| x.gpus.any? { |g| g.model.to_s.include?("Arc") } }
 
     assert_nil arc.gpus.first.mem_clock
@@ -112,7 +112,7 @@ class OctaSpace::ComputeResourceTest < Minitest::Test
   def test_start_batch_assigns_positions_and_parses_results
     stub_request(:post, "#{BASE}/services/compute")
       .with(body: [{id: "one", node_number: "A", image: "x"}, {id: 1, node_number: "B", image: "x"}].to_json)
-      .to_return(status: 200, body: fixture("next/batch.json"))
+      .to_return(status: 200, body: fixture("batch.json"))
 
     results = @client.compute.start_batch([{id: "one", node_number: "A", image: "x"}, {node_number: "B", image: "x"}])
     assert_equal 3, results.size

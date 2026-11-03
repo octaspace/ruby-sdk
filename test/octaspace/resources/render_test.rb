@@ -11,7 +11,7 @@ class OctaSpace::RenderResourceTest < Minitest::Test
   end
 
   def test_list_returns_render_machines
-    stub_get("/services/render", fixture_path: "next/services_render.json")
+    stub_get("/services/render", fixture_path: "services_render.json")
     machines = @client.render.list
 
     assert(machines.all?(OctaSpace::Types::RenderMachine))
@@ -48,7 +48,7 @@ class OctaSpace::RenderResourceTest < Minitest::Test
     assert_equal "Service is temporarily unavailable", results.first.reason
   end
 
-  def test_start_batch_rejects_legacy_fields
+  def test_start_batch_rejects_unknown_fields
     assert_raises(ArgumentError) { @client.render.start_batch([{node_number: "A", disk_size: 100}]) }
   end
 end

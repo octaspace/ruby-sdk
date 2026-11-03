@@ -7,8 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.3.0] - Unreleased
 
-Moves the SDK to the next-generation OctaSpace API (`https://api-dev.octa.space`). This release is
-not compatible with the legacy API; see [docs/migration-next.md](docs/migration-next.md).
+Supports the current OctaSpace API, which differs from the one 0.2.x was written for in
+authentication, node identifiers, money units and most payloads. Not backward compatible.
 
 ### Added
 
@@ -16,31 +16,29 @@ not compatible with the legacy API; see [docs/migration-next.md](docs/migration-
 - `client.render`: `list`, `start`, `start_batch`.
 - `client.sessions`: `list`, `get`, `logs(tail:)`, `stop`, `wait_ready`, `wait_stopped`.
 - `client.hosting`: `nodes`, `set_prices`.
-- `client.stats`: `gpu_current`, `gpu_history` (with `GpuHistory#points`), `gpu_locations`.
-- Typed read-only models (`OctaSpace::Model`, `OctaSpace::Types::*`) that keep unknown fields.
-- `OctaSpace::Money` for integer micro-USD.
-- `OctaSpace::ConflictError` (409), `SessionStoppedError`, `WaitTimeoutError`.
-- `OctaSpace::RateLimit`, `client.rate_limit`, `ApiError#retry_after` / `#rate_limit` / `#body`.
-- `bin/smoke` live checks and a CI smoke job; `bundler-audit` in CI; Dependabot.
+- `client.stats`: `gpu_current`, `gpu_history`, `gpu_locations`.
+- Typed read-only response models (`OctaSpace::Types::*`).
+- `OctaSpace::Money` for integer micro-USD amounts.
+- `ConflictError` (409), `SessionStoppedError`, `WaitTimeoutError`; `retry_after`, `rate_limit` and
+  `body` on API errors; `client.rate_limit`.
 
 ### Changed
 
-- Default base URL is `https://api-dev.octa.space`; authentication is `Authorization: Bearer <key>`
-  with `octa_ak_…` keys.
-- Resource methods return models, uuids or `nil` instead of `OctaSpace::Response`.
-- 400 maps to `ValidationError`; error messages come from the API's `{"message"}`.
-- Retries only for GET and the idempotent session stop, honouring `Retry-After` up to 60 s;
-  failover across `base_urls` only for GET.
-- Logging never includes headers or bodies; `on_request` no longer receives headers.
+- Authentication is `Authorization: Bearer <key>` with `octa_ak_…` API keys.
+- Default base URL is `https://api-dev.octa.space`.
+- Nodes are identified by `node_number` (e.g. `7KQ4-M2XD-4`) instead of an integer id.
+- Prices, charges and the balance are integer micro-USD.
+- Resource methods return models, session uuids or `nil` instead of `OctaSpace::Response`.
+- 400 raises `ValidationError`; error messages come from the API.
+- Only GET requests and `sessions.stop` are retried; starts and restarts never are.
+- Logs never include request headers or bodies; `on_request` no longer receives headers.
 - Requires Ruby 3.3+ and faraday 2.14.3+; `faraday-retry` is no longer a dependency.
 
 ### Removed
 
-- Legacy resources: `nodes`, `apps`, `idle_jobs`, `services` (`mr`, `vpn`, `render`, `session`),
-  `accounts.profile`, `accounts.generate_wallet`.
-- `ProvisionRejectedError`, `PayloadHelpers`, the old `Types::Account/Balance/Node/Session`.
-- The Rails playground (`bin/playground`, `test/dummy`), `MockTransport`, the Rails Engine and the
-  Appraisal matrix.
+- `nodes`, `apps`, `idle_jobs`, `services` (`mr`, `vpn`, `render`, `session`),
+  `accounts.profile` and `accounts.generate_wallet`: the API no longer offers them.
+- `ProvisionRejectedError`, `PayloadHelpers`, the `persistent` configuration alias.
 
 ## [0.2.0] - 2026-04-16
 

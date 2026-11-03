@@ -10,7 +10,7 @@ module OctaSpace
   #
   # @example
   #   machine = client.compute.list.first
-  #   machine.node_number      # => "M95S-WZG8-7"
+  #   machine.node_number      # => "7KQ4-M2XD-4"
   #   machine.gpus.first.model # => "NVIDIA GeForce RTX 3090"
   #   machine[:new_field]      # => value of a field the SDK has no reader for
   #   machine.to_h             # => the JSON object as parsed

@@ -4,7 +4,7 @@ require "test_helper"
 
 class OctaSpace::AccountsResourceTest < Minitest::Test
   def test_balance
-    stub_get("/accounts/balance", fixture_path: "next/account_balance.json")
+    stub_get("/accounts/balance", fixture_path: "account_balance.json")
     balance = test_client.accounts.balance
 
     assert_equal 1_234_567, balance.balance

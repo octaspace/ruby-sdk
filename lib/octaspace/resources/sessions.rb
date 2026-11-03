@@ -9,7 +9,7 @@ module OctaSpace
     # session history.
     #
     # @example
-    #   uuid = client.compute.start(node_number: "M95S-WZG8-7", image: "ubuntu:24.04")
+    #   uuid = client.compute.start(node_number: "7KQ4-M2XD-4", image: "ubuntu:24.04")
     #   session = client.sessions.wait_ready(uuid) { |s| puts "#{s.progress} #{s.pull_percent}" }
     #   client.sessions.logs(uuid, tail: 50).container
     #   client.sessions.stop(uuid)

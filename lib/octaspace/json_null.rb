@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module OctaSpace
-  # Repairs for values the next API sometimes sends with the wrong JSON type.
+  # Repairs for values the API sometimes sends with the wrong JSON type.
   #
   # A missing value can arrive as the string "null" instead of JSON null: in
   # GPU statistics (price percentiles, TFLOPS) and in what nodes report about

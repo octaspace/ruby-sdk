@@ -21,13 +21,6 @@ class OctaSpace::ConfigurationTest < Minitest::Test
     assert config.keep_alive?
   end
 
-  def test_persistent_alias
-    config = OctaSpace::Configuration.new
-    config.persistent = true
-    assert config.keep_alive?
-    assert config.persistent
-  end
-
   def test_urls_single_base_url
     config = OctaSpace::Configuration.new
     config.base_url = "https://api.octa.space"

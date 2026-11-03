@@ -1,15 +1,10 @@
 # frozen_string_literal: true
 
 module OctaSpace
-  # Test stand of the next-generation OctaSpace API. It is the default base URL
-  # until the production host of the new API is announced: the production hosts
-  # (+api.octa.computer+, +api.octa.space+) still serve the legacy API.
-  BASE_URL_DEV = "https://api-dev.octa.space"
-
   # Default API base URL
-  DEFAULT_BASE_URL = BASE_URL_DEV
+  DEFAULT_BASE_URL = "https://api-dev.octa.space"
 
-  # Prefix of the account API keys issued in Cube (Profile → Credentials)
+  # Prefix of account API keys (created in Cube → Profile → Credentials)
   API_KEY_PREFIX = "octa_ak_"
 
   # Global and per-client configuration for the OctaSpace SDK
@@ -152,10 +147,6 @@ module OctaSpace
 
     # @return [Boolean] whether an API key is configured
     def api_key? = !api_key.nil?
-
-    # Alias: `persistent` is the Cube-internal term; `keep_alive` is the public SDK term
-    alias_method :persistent, :keep_alive
-    alias_method :persistent=, :keep_alive=
 
     # @return [Boolean]
     def keep_alive? = !!keep_alive

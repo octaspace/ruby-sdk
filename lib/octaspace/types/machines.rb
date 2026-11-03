@@ -31,7 +31,7 @@ module OctaSpace
     # Fields shared by compute and render listings
     class Machine < Model
       # @!attribute [r] node_number
-      #   @return [String] node number, e.g. "M95S-WZG8-7"
+      #   @return [String] node number, e.g. "7KQ4-M2XD-4"
       # @!attribute [r] base_price
       #   @return [Integer] price per hour, micro-USD
       # @!attribute [r] min_rent_minutes

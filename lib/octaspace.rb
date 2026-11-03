@@ -28,7 +28,7 @@ require "octaspace/client"
 
 # OctaSpace Ruby SDK
 #
-# Official Ruby client for the next-generation OctaSpace API.
+# Official Ruby client for the OctaSpace API.
 # Supports standard and keep-alive (persistent) connection modes,
 # automatic URL rotation/failover, retry with exponential backoff,
 # and optional Rails integration.

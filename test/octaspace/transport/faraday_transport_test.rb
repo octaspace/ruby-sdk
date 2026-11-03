@@ -112,12 +112,12 @@ class OctaSpace::FaradayTransportTest < Minitest::Test
     assert_requested(:get, "#{BASE}/network") { |req| !req.headers.key?("Authorization") }
   end
 
-  def test_401_with_legacy_key_adds_hint
+  def test_401_with_non_octa_ak_key_adds_hint
     @config.api_key = "a" * 64
     stub_request(:get, "#{BASE}/accounts/balance").to_return(status: 401, body: '{"message":"Invalid bearer token"}')
 
     error = assert_raises(OctaSpace::AuthenticationError) { transport.get("/accounts/balance") }
-    assert_match(/\AInvalid bearer token \(the next API expects a key starting with "octa_ak_"/, error.message)
+    assert_match(/\AInvalid bearer token \(API keys start with "octa_ak_"/, error.message)
   end
 
   def test_401_with_new_key_has_no_hint
