@@ -27,7 +27,6 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "faraday", ">= 2.14.3", "< 3"
-  spec.add_dependency "faraday-retry", "~> 2.2"
 
   # Optional — persistent mode (users add to their own Gemfile):
   #   gem "faraday-net_http_persistent"

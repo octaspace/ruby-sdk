@@ -11,7 +11,7 @@ module OctaSpace
       # GET /network
       # @return [OctaSpace::Response]
       def info
-        get("/network")
+        get("/network", auth: :none)
       end
     end
   end

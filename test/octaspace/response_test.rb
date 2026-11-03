@@ -4,12 +4,12 @@ require "test_helper"
 
 class OctaSpace::ResponseTest < Minitest::Test
   def make_response(status:, body: {}, headers: {})
-    faraday = Struct.new(:status, :headers, :body).new(
-      status,
-      {"content-type" => "application/json"}.merge(headers),
-      body
+    OctaSpace::Response.new(
+      status: status,
+      headers: Faraday::Utils::Headers.new({"content-type" => "application/json"}.merge(headers)),
+      body: JSON.generate(body),
+      data: body
     )
-    OctaSpace::Response.new(faraday)
   end
 
   # --- Status predicates ---
@@ -70,11 +70,34 @@ class OctaSpace::ResponseTest < Minitest::Test
 
   # --- Data ---
 
-  def test_data_is_body
+  def test_data_is_parsed_body
     body = {"id" => 1, "name" => "test"}
     r = make_response(status: 200, body: body)
     assert_equal body, r.data
-    assert_equal body, r.body
+    assert_equal JSON.generate(body), r.body
+  end
+
+  def test_retry_after_fraction_rounds_up
+    assert_equal 2, make_response(status: 429, headers: {"Retry-After" => "1.2"}).retry_after
+  end
+
+  def test_retry_after_http_date
+    date = (Time.now + 30).httpdate
+    assert_in_delta 30, make_response(status: 429, headers: {"Retry-After" => date}).retry_after, 2
+  end
+
+  def test_retry_after_garbage_is_nil
+    assert_nil make_response(status: 429, headers: {"Retry-After" => "soon"}).retry_after
+  end
+
+  def test_rate_limit_from_headers
+    r = make_response(status: 200, headers: {"RateLimit-Limit" => "300", "RateLimit-Remaining" => "12"})
+    assert_equal OctaSpace::RateLimit.new(limit: 300, remaining: 12, reset: nil), r.rate_limit
+  end
+
+  def test_rate_limit_nil_without_headers_or_with_garbage
+    assert_nil make_response(status: 200).rate_limit
+    assert_nil make_response(status: 200, headers: {"RateLimit-Limit" => "many"}).rate_limit
   end
 
   def test_data_array

@@ -38,6 +38,10 @@ class OctaSpace::PersistentTransportTest < Minitest::Test
     assert response.success?
   end
 
+  def test_transport_stats_reports_persistent_mode
+    assert_equal :persistent, @transport.transport_stats[:mode]
+  end
+
   def test_pool_stats_returns_hash
     stats = @transport.pool_stats
     assert_kind_of Hash, stats
@@ -76,9 +80,8 @@ class OctaSpace::PersistentTransportTest < Minitest::Test
 
   def test_sends_authorization_header
     stub_request(:get, "#{BASE}/nodes")
-      .with(headers: {"Authorization" => "test_key"})
+      .with(headers: {"Authorization" => "Bearer test_key", "Connection" => "keep-alive"})
       .to_return(status: 200, body: "[]", headers: {"Content-Type" => "application/json"})
-    @transport.get("/nodes")
-    assert true
+    assert @transport.get("/nodes").success?
   end
 end

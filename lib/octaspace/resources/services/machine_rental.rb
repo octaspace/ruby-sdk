@@ -19,7 +19,7 @@ module OctaSpace
         # @param params [Hash] optional filter params
         # @return [OctaSpace::Response]
         def list(**params)
-          get("/services/mr", params:)
+          get("/services/mr", params:, auth: :optional)
         end
 
         # Create (start) a machine rental
