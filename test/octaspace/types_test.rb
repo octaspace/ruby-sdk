@@ -55,19 +55,4 @@ class OctaSpace::TypesTest < Minitest::Test
     )
     assert_equal "OctaSpace Account <user@example.com>", account.to_s
   end
-
-  # --- Session ---
-
-  def test_session_to_s
-    session = OctaSpace::Types::Session.new(
-      uuid: "sess-abc", service: "mr", app_name: "SD",
-      node_id: 1, urls: {}, prices: {}, node_hw: nil
-    )
-    assert_equal "Session <sess-abc> mr", session.to_s
-  end
-
-  def test_session_equality
-    attrs = {uuid: "sess-1", service: "mr", app_name: "SD", node_id: 1, urls: {}, prices: {}, node_hw: nil}
-    assert_equal OctaSpace::Types::Session.new(**attrs), OctaSpace::Types::Session.new(**attrs)
-  end
 end

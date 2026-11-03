@@ -32,6 +32,16 @@ module OctaSpace
         end
       end
 
+      # Hides the values of these attributes in #inspect (URLs that grant access).
+      def redact(*names)
+        redacted_names.concat(names)
+      end
+
+      # @return [Array<Symbol>]
+      def redacted_names
+        @redacted_names ||= []
+      end
+
       # @return [Array<Symbol>] declared attribute names
       def attribute_names
         @attribute_names ||= []
@@ -40,6 +50,7 @@ module OctaSpace
       def inherited(subclass)
         super
         subclass.instance_variable_set(:@attribute_names, attribute_names.dup)
+        subclass.instance_variable_set(:@redacted_names, redacted_names.dup)
       end
 
       # Wraps a JSON object; anything else (nil, a scalar) is returned as is.
@@ -84,7 +95,10 @@ module OctaSpace
 
     def inspect
       shown = self.class.attribute_names.filter_map do |name|
-        "#{name}=#{@data[name.to_s].inspect}" if @data.key?(name.to_s) && !@data[name.to_s].is_a?(Enumerable)
+        value = @data[name.to_s]
+        next if !@data.key?(name.to_s) || value.is_a?(Enumerable)
+
+        "#{name}=#{(value && self.class.redacted_names.include?(name)) ? "[REDACTED]" : value.inspect}"
       end
       "#<#{self.class.name} #{shown.join(" ")}>"
     end

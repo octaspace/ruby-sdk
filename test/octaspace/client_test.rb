@@ -10,7 +10,8 @@ class OctaSpace::ClientTest < Minitest::Test
     assert_instance_of OctaSpace::Resources::Sessions, client.sessions
     assert_instance_of OctaSpace::Resources::Apps, client.apps
     assert_instance_of OctaSpace::Resources::Network, client.network
-    assert_instance_of OctaSpace::Resources::Services, client.services
+    assert_instance_of OctaSpace::Resources::Compute, client.compute
+    assert_instance_of OctaSpace::Resources::Render, client.render
     assert_instance_of OctaSpace::Resources::IdleJobs, client.idle_jobs
   end
 
