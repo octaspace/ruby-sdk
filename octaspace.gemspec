@@ -14,7 +14,7 @@ Gem::Specification.new do |spec|
   spec.homepage = "https://github.com/octaspace/ruby-sdk"
   spec.license = "MIT"
 
-  spec.required_ruby_version = ">= 3.2.0"
+  spec.required_ruby_version = ">= 3.3.0"
 
   spec.metadata = {
     "changelog_uri" => "#{spec.homepage}/blob/main/CHANGELOG.md",
@@ -23,11 +23,10 @@ Gem::Specification.new do |spec|
     "rubygems_mfa_required" => "true"
   }
 
-  spec.files = Dir["lib/**/*", "MIT-LICENSE", "README.md", "CHANGELOG.md"] -
-    Dir["lib/octaspace/playground/**/*", "lib/octaspace/transport/mock_transport.rb", "lib/octaspace/engine.rb"]
+  spec.files = Dir["lib/**/*.rb", "MIT-LICENSE", "README.md", "CHANGELOG.md"]
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "faraday", "~> 2.9"
+  spec.add_dependency "faraday", ">= 2.14.3", "< 3"
   spec.add_dependency "faraday-retry", "~> 2.2"
 
   # Optional — persistent mode (users add to their own Gemfile):

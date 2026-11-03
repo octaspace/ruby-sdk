@@ -57,11 +57,9 @@ class OctaSpace::ClientTest < Minitest::Test
   end
 
   def test_accepts_injected_transport
-    config = OctaSpace::Configuration.new
-    transport = OctaSpace::Transport::MockTransport.new(config, scenario: "mock", delay_seconds: 0)
+    transport = Object.new
     client = OctaSpace::Client.new(api_key: "key", transport: transport)
 
     assert_same transport, client.instance_variable_get(:@transport)
-    assert_equal :mock, client.transport_stats[:mode]
   end
 end

@@ -3,6 +3,14 @@
 require "test_helper"
 
 class OctaSpace::ServicesResourceTest < Minitest::Test
+  # Request payloads from the removed playground presets.
+  PAYLOADS = {
+    "services.mr.create" => {node_id: 1, disk_size: 10, image: "ubuntu:24.04", app: "249b4cb3-3db1-4c06-98a4-772ba88cd81c"},
+    "services.render.create" => {node_id: 1, disk_size: 100},
+    "services.vpn.create" => {node_id: 1, subkind: "wg"},
+    "services.session.stop" => {uuid: "sess-abc-123", score: 5}
+  }.freeze
+
   def setup
     super
     @client = test_client
@@ -34,7 +42,7 @@ class OctaSpace::ServicesResourceTest < Minitest::Test
   end
 
   def test_mr_create_returns_success
-    payload = OctaSpace::Playground::PayloadPresets.payload_for("services.mr.create").merge(
+    payload = PAYLOADS.fetch("services.mr.create").merge(
       organization_id: 77,
       project_id: 88
     )
@@ -63,7 +71,7 @@ class OctaSpace::ServicesResourceTest < Minitest::Test
   end
 
   def test_mr_create_raises_api_error_on_400_object_rejection
-    payload = OctaSpace::Playground::PayloadPresets.payload_for("services.mr.create")
+    payload = PAYLOADS.fetch("services.mr.create")
     stub_request(:post, "#{StubHelpers::BASE_URL}/services/mr")
       .to_return(status: 400, body: '{"message":"Node not found"}', headers: json_headers)
 
@@ -71,7 +79,7 @@ class OctaSpace::ServicesResourceTest < Minitest::Test
   end
 
   def test_mr_create_raises_provision_rejected_error_on_batch_rejection
-    payload = OctaSpace::Playground::PayloadPresets.payload_for("services.mr.create")
+    payload = PAYLOADS.fetch("services.mr.create")
     stub_request(:post, "#{StubHelpers::BASE_URL}/services/mr")
       .to_return(
         status: 200,
@@ -101,7 +109,7 @@ class OctaSpace::ServicesResourceTest < Minitest::Test
   end
 
   def test_vpn_create_returns_success
-    payload = OctaSpace::Playground::PayloadPresets.payload_for("services.vpn.create")
+    payload = PAYLOADS.fetch("services.vpn.create")
     stub_post("/services/vpn", status: 201, body: '{"uuid":"new-vpn","status":"starting"}')
     response = @client.services.vpn.create(**payload)
     assert response.success?
@@ -117,7 +125,7 @@ class OctaSpace::ServicesResourceTest < Minitest::Test
   end
 
   def test_render_create_returns_success
-    payload = OctaSpace::Playground::PayloadPresets.payload_for("services.render.create")
+    payload = PAYLOADS.fetch("services.render.create")
     stub_post("/services/render", status: 201, body: '{"uuid":"new-render","status":"queued"}')
     response = @client.services.render.create(**payload)
     assert response.success?
@@ -152,7 +160,7 @@ class OctaSpace::ServicesResourceTest < Minitest::Test
   end
 
   def test_session_proxy_stop
-    payload = OctaSpace::Playground::PayloadPresets.payload_for("services.session.stop")
+    payload = PAYLOADS.fetch("services.session.stop")
     stub_post("/services/sess-abc-123/stop", status: 200, body: '{"status":"stopped"}')
     response = @client.services.session(payload[:uuid]).stop(score: payload[:score])
     assert response.success?
