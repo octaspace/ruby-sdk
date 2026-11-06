@@ -2,7 +2,7 @@
 
 [![Gem Version](https://img.shields.io/gem/v/octaspace)](https://rubygems.org/gems/octaspace)
 [![CI](https://github.com/octaspace/ruby-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/octaspace/ruby-sdk/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](MIT-LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 Official Ruby SDK for the [OctaSpace API](https://api-dev.octa.space/swagger). Requires Ruby 3.3 or newer.
 
@@ -192,4 +192,4 @@ closed when the process exits.
 
 ## License
 
-[MIT](MIT-LICENSE)
+[MIT](LICENSE)
