@@ -60,7 +60,7 @@ class OctaSpace::StatsResourceTest < Minitest::Test
     stub_get("/stats/gpu/locations", fixture_path: "stats_gpu_locations.json")
     loc = @client.stats.gpu_locations.first
 
-    assert_equal "Mukachevo", loc.city
+    assert_equal "Frankfurt", loc.city
     assert_equal "Arc B580", loc.model
     assert_equal 2, loc.gpus
   end

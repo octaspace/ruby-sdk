@@ -1,195 +1,154 @@
-# octaspace
+# OctaSpace Ruby SDK
 
 [![Gem Version](https://img.shields.io/gem/v/octaspace)](https://rubygems.org/gems/octaspace)
 [![CI](https://github.com/octaspace/ruby-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/octaspace/ruby-sdk/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](MIT-LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Official Ruby SDK for the [OctaSpace API](https://api-dev.octa.space/swagger). Requires Ruby 3.3 or newer.
+The official Ruby library for the [OctaSpace](https://octa.space) API. Rent
+compute machines and render nodes, manage sessions and the nodes you host, and
+read GPU market statistics from Ruby code.
+
+**Contents:** [Installation](#installation) ·
+[Quick start](#quick-start) · [Authentication](#authentication) ·
+[Handling errors](#handling-errors) · [API overview](#api-overview) ·
+[Documentation](#documentation) · [Versioning](#versioning)
 
 ## Installation
 
-```ruby
-# Gemfile
-gem "octaspace"
+```bash
+bundle add octaspace
 ```
 
-## API key
-
-Create a key in Cube under **Profile → Credentials**. Keys start with `octa_ak_` and are sent as
-`Authorization: Bearer <key>`.
-
-The key is optional for public data: network and GPU statistics never use it, and machine listings
-work without it (the anonymous listing may be up to an hour old; with a key it is at most 10 seconds
-old). Methods that need a key raise `OctaSpace::AuthenticationError` before sending a request when
-none is configured.
+Requires Ruby 3.3 or later. The only runtime dependency is
+[Faraday](https://github.com/lostisland/faraday).
 
 ## Quick start
 
-```ruby
-require "octaspace"
+1. [Create an API key](#authentication) and export it:
 
+   ```bash
+   export OCTA_API_KEY="octa_ak_..."
+   ```
+
+2. Run this program:
+
+   ```ruby
+   require "octaspace"
+
+   client = OctaSpace::Client.new(api_key: ENV["OCTA_API_KEY"])
+
+   begin
+     balance = client.accounts.balance
+     puts "Balance: #{balance.formatted}" # Balance: $12.500000
+
+     client.compute.list.each do |m|
+       puts "#{m.node_number} #{m.city} #{OctaSpace::Money.format(m.base_price)} per hour"
+     end
+   rescue OctaSpace::Error => e
+     abort e.message
+   end
+   ```
+
+Create one client and reuse it: it is safe to share between threads.
+
+## Authentication
+
+The SDK authenticates with an **API key** of your OctaSpace account. You create
+and delete API keys in the OctaSpace dashboard:
+
+1. Sign in to the [OctaSpace dashboard](https://cube-dev.octa.space).
+2. In the sidebar, open **Account → Credentials**.
+3. In the **API Keys** section, click **New key**.
+4. Enter a **Label** that tells you where the key is used, for example
+   `billing-service`, and click **Create key**.
+5. Copy the key. It starts with `octa_ak_`.
+
+> [!IMPORTANT]
+> The key is shown in full only once, right after you create it. Copy it
+> before you close the dialog. If you lose it, delete it and create a new one.
+
+Pass the key to `OctaSpace::Client.new`. The SDK sends it in the
+`Authorization: Bearer <key>` header.
+
+```ruby
 client = OctaSpace::Client.new(api_key: ENV["OCTA_API_KEY"])
+```
 
-client.accounts.balance.formatted                     # => "$12.500000"
+> [!WARNING]
+> An API key acts on behalf of your account: it can start sessions that are
+> charged to your balance. Keep it out of source code and version control. If
+> a key leaks, delete it under **Account → Credentials → API Keys**; every
+> program that uses it stops working at once.
 
-machine = client.compute.list.min_by(&:base_price)
-uuid = client.compute.start(
-  node_number: machine.node_number,
-  image: "ubuntu:24.04",
-  disk_size: 20,
-  http_ports: [8888],
-  envs: {"FOO" => "bar"},
-  ssh: true
-)
+The **API Keys** list shows each key's label, its first characters and when it
+was last used. Use a separate key for each program or machine, so that you can
+delete one without affecting the others. The number of keys per account is
+limited; the counter next to **API Keys** shows how many you have.
 
-session = client.sessions.wait_ready(uuid, timeout: 600) do |s|
-  puts "#{s.status} #{s.progress} #{s.pull_percent}"
+### Calls without an API key
+
+These methods also work without an API key. Create the client without
+`api_key:` to use them anonymously:
+
+| Method | Without a key |
+| --- | --- |
+| `network.info` | Same result |
+| `stats.gpu_current`, `stats.gpu_history`, `stats.gpu_locations` | Same result |
+| `compute.list`, `render.list` | Refreshed about once an hour instead of every 10 seconds |
+
+Every other method requires an API key and raises
+`OctaSpace::AuthenticationError` without one, before any request is sent.
+
+## Handling errors
+
+Every error the SDK raises is an `OctaSpace::Error`. Rescue the specific class
+you can handle:
+
+```ruby
+begin
+  uuid = client.compute.start(node_number: "7KQ4-M2XD-4", image: "ubuntu:24.04")
+rescue OctaSpace::AuthenticationError
+  # the API key is missing, wrong or deleted
+rescue OctaSpace::ValidationError => e
+  # the request was rejected; e.message says why
+rescue OctaSpace::RateLimitError => e
+  # too many requests; wait e.retry_after seconds
 end
-session.urls                                          # => {"8888" => "https://…"}
-session.ssh.endpoint                                  # direct SSH, or the SSH proxy
-
-client.sessions.logs(uuid, tail: 100).container
-client.sessions.stop(uuid)
-client.sessions.wait_stopped(uuid)
 ```
 
-## Resources
+See [Errors, rate limits and retries](docs/errors-and-reliability.md).
 
-| Method | Endpoint | Key | Returns |
-|---|---|---|---|
-| `network.info` | `GET /network` | no | `Types::Network` |
-| `stats.gpu_current(verified:)` | `GET /stats/gpu/current` | no | `Types::GpuMarket` |
-| `stats.gpu_history(gpu_name:, verified:, from:, to:, step:)` | `GET /stats/gpu/history` | no | `{model => Types::GpuHistory}` |
-| `stats.gpu_locations` | `GET /stats/gpu/locations` | no | `[Types::GpuLocation]` |
-| `accounts.balance` | `GET /accounts/balance` | yes | `Types::Balance` |
-| `compute.list` | `GET /services/compute` | optional | `[Types::ComputeMachine]` |
-| `compute.start(node_number:, image:, …)` | `POST /services/compute` | yes | session uuid |
-| `compute.start_batch(items)` | `POST /services/compute` | yes | `[Types::BatchResult]` |
-| `compute.restart(uuid, **params)` | `POST /services/compute/{uuid}/restart` | yes | session uuid |
-| `render.list` | `GET /services/render` | optional | `[Types::RenderMachine]` |
-| `render.start(node_number:)` | `POST /services/render` | yes | session uuid |
-| `render.start_batch(items)` | `POST /services/render` | yes | `[Types::BatchResult]` |
-| `sessions.list` | `GET /sessions` | yes | `[Types::Session]` |
-| `sessions.get(uuid)` | `GET /services/{uuid}/info` | yes | `Types::Session` |
-| `sessions.logs(uuid, tail:)` | `GET /services/{uuid}/logs` | yes | `Types::SessionLogs` |
-| `sessions.stop(uuid)` | `POST /services/{uuid}/stop` | yes | session uuid |
-| `sessions.wait_ready(uuid, timeout:, interval:)` | polls `sessions.get` | yes | `Types::Session` |
-| `sessions.wait_stopped(uuid, timeout:, interval:)` | polls `sessions.get` | yes | `true` |
-| `hosting.nodes` | `GET /hosting/nodes` | yes | `[Types::HostingNode]` |
-| `hosting.set_prices(number, base:, storage:, traffic:, min_rent_minutes:)` | `PATCH /hosting/nodes/{number}/prices` | yes | `nil` |
+## API overview
 
-Responses are read-only models with readers for the documented fields. Fields without a reader are
-still available as `model[:field]`, and `model.to_h` returns the parsed JSON. `sessions.list` and
-`sessions.get` return a `Types::ComputeSession` or a `Types::RenderSession`, chosen by the `service`
-field.
+| Resource | Dashboard section | Operations | Guide |
+| --- | --- | --- | --- |
+| `client.compute` | Marketplace → Compute | List machines, start, batch start, restart | [Compute](docs/resources.md#compute) |
+| `client.render` | Render → Launch Nodes | List render nodes, start, batch start | [Render](docs/resources.md#render) |
+| `client.sessions` | Marketplace → Sessions, Render → Render Nodes | List, get, logs, stop, wait until ready or stopped | [Sessions](docs/sessions.md) |
+| `client.hosting` | Hosting → Nodes | Your nodes, set prices | [Hosting](docs/resources.md#hosting) |
+| `client.accounts` | Account → Billing | Balance | [Accounts](docs/resources.md#accounts) |
+| `client.network` | — | Platform statistics | [Network](docs/resources.md#network) |
+| `client.stats` | — | GPU market: current, history, locations | [Stats](docs/resources.md#stats) |
 
-## Units
+Every class and method is documented on
+[RubyDoc.info](https://rubydoc.info/gems/octaspace).
 
-| What | Unit | Helper |
-|---|---|---|
-| Prices, charges, balance | integer micro-USD (1 = $0.000001) | `OctaSpace::Money` |
-| `started_at` (sessions), `ts` (logs) | Unix milliseconds | `started_time`, `time` |
-| `at` (network, stats) | Unix seconds | `time` |
-| `online_at` (hosting) | ISO 8601 | `online_time` |
-| `net_down_mbps`, `net_up_mbps` | Mbit/s (0 in listings: not measured) | |
-| `memory`, `disk` in listings | free bytes | |
-| `node_hw.disk` in sessions | rented GB | |
+## Documentation
 
-```ruby
-OctaSpace::Money.format(100)          # => "$0.000100"
-OctaSpace::Money.from_usd("0.25")     # => 250000
-client.hosting.set_prices("7KQ4-M2XD-4", base: OctaSpace::Money.from_usd("0.25"), min_rent_minutes: 15)
-```
+| Guide | Covers |
+| --- | --- |
+| [Client configuration](docs/getting-started.md) | Options and defaults, timeouts, logging, Rails, keep-alive connections |
+| [Resources](docs/resources.md) | Compute, render, hosting, balance, network and GPU statistics |
+| [Sessions](docs/sessions.md) | Waiting until ready, connecting, logs, stopping |
+| [Errors, rate limits and retries](docs/errors-and-reliability.md) | Error classes, limits, automatic retries |
+| [Changelog](CHANGELOG.md) | Changes in each release |
 
-## Starting several sessions
+## Versioning
 
-```ruby
-results = client.compute.start_batch([
-  {id: "a", node_number: "7KQ4-M2XD-4", image: "ubuntu:24.04"},
-  {id: "b", node_number: "M2XD-7KQ4-0", image: "ubuntu:24.04"}
-])
-results.each { |r| puts r.started? ? "#{r.id}: #{r.uuid}" : "#{r.id}: #{r.reason}" }
-```
-
-Each item succeeds or fails on its own and the failure is reported in its result. Items without an
-`id` get their position in the array. A single `start` raises `OctaSpace::ValidationError` instead.
-
-## Restarting a compute session
-
-```ruby
-client.compute.restart(uuid)                          # same parameters as before
-client.compute.restart(uuid, disk_size: 20, envs: {"FOO" => "baz"}, http_ports: [8888], ssh: true)
-```
-
-With parameters, a restart **replaces all of them**: every omitted parameter gets its default, not its
-current value (`disk_size` becomes 1 GB; `envs`, ports and `startup_script` are dropped). Pass the
-full set you want. A session can be restarted once per 5 minutes and 6 times per hour
-(`OctaSpace::RateLimitError`, see `retry_after`); while it is still starting or restarting, the API
-answers `OctaSpace::ConflictError`.
-
-## Sessions and SSH
-
-Only running sessions are reported. Once a session stops, `get`, `logs` and `stop` raise
-`OctaSpace::NotFoundError`. `stop` is asynchronous; `wait_stopped` waits until the session is gone. A
-session stopped before its `min_rent_minutes` is charged for that long.
-
-`ssh.web` (web terminal) contains credentials and `fm` (file manager) needs no login, so treat both
-as secrets; `inspect` hides them. `ssh.*.user` comes from the image: pass it to `ssh` as a separate
-argument, after `--`: `ssh -p PORT -l USER -- HOST`.
-
-## Errors
-
-```
-OctaSpace::Error
-├── ConfigurationError
-├── NetworkError
-│   ├── ConnectionError
-│   └── TimeoutError
-│       └── WaitTimeoutError          wait_ready / wait_stopped timed out
-└── ApiError                          status, message, body, retry_after, rate_limit, request_id
-    ├── ValidationError               400, 422
-    ├── AuthenticationError           401, or no API key configured
-    ├── PermissionError               403
-    ├── NotFoundError                 404
-    │   └── SessionStoppedError       the session stopped during wait_ready
-    ├── ConflictError                 409
-    ├── RateLimitError                429
-    └── ServerError                   5xx
-        ├── BadGatewayError           502
-        ├── ServiceUnavailableError   503
-        └── GatewayTimeoutError       504
-```
-
-GET requests and `sessions.stop` are retried on network errors and on 429/502/503/504, honouring
-`Retry-After` up to 60 seconds; a longer wait is raised to the caller. Starts and restarts are never
-retried. `client.rate_limit` returns the `RateLimit-*` values of the latest response.
-
-## Configuration
-
-```ruby
-OctaSpace.configure do |config|
-  config.api_key = ENV["OCTA_API_KEY"]
-end
-
-client = OctaSpace.client                                       # shared client
-other = OctaSpace::Client.new(api_key: "octa_ak_…", read_timeout: 60)
-```
-
-| Option | Default | Description |
-|---|---|---|
-| `api_key` | `nil` | API key |
-| `base_url` | `https://api-dev.octa.space` | API endpoint |
-| `base_urls` | `nil` | Several endpoints; GET requests fail over between them on network errors |
-| `open_timeout` / `read_timeout` / `write_timeout` | `10` / `30` / `30` | Seconds |
-| `max_retries` | `2` | Retries of GET requests and `sessions.stop` |
-| `keep_alive` | `false` | Persistent connections; add `faraday-net_http_persistent` and `connection_pool` to your Gemfile |
-| `pool_size` / `pool_timeout` / `idle_timeout` | `5` / `5` / `60` | Connection pool (keep-alive) |
-| `on_request` / `on_response` | `nil` | Callables run before each request and after each response |
-| `logger` / `log_level` | `nil` / `:info` | One line per request; headers and bodies are never logged |
-
-In a Rails app, put the `configure` block in an initializer. The shared client's connections are
-closed when the process exits.
+The library follows [Semantic Versioning](https://semver.org). Until version
+1.0, a minor release can contain breaking changes; the
+[changelog](CHANGELOG.md) marks them as **Breaking**.
 
 ## License
 
-[MIT](MIT-LICENSE)
+[MIT](LICENSE)

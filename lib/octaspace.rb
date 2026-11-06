@@ -26,12 +26,9 @@ require "octaspace/resources/sessions"
 require "octaspace/resources/hosting"
 require "octaspace/client"
 
-# OctaSpace Ruby SDK
-#
-# Official Ruby client for the OctaSpace API.
-# Supports standard and keep-alive (persistent) connection modes,
-# automatic URL rotation/failover, retry with exponential backoff,
-# and optional Rails integration.
+# The official Ruby library for the OctaSpace API: rent compute machines and
+# render nodes, manage sessions and the nodes you host, and read GPU market
+# statistics.
 #
 # @example Quick start
 #   OctaSpace.configure do |config|
@@ -42,7 +39,7 @@ require "octaspace/client"
 #   client.compute.list
 #   client.accounts.balance
 #
-# @see https://api-dev.octa.space/swagger
+# @see https://github.com/octaspace/ruby-sdk#readme Guides
 module OctaSpace
   class << self
     # Global configuration object
@@ -64,7 +61,7 @@ module OctaSpace
       yield configuration
     end
 
-    # Reset global configuration to defaults (useful in tests)
+    # Resets the global configuration to its defaults and drops the shared client.
     def reset_configuration!
       @configuration = Configuration.new
       @shared_client = nil

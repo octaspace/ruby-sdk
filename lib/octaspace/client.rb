@@ -18,13 +18,13 @@ module OctaSpace
   #     pool_size:  ENV.fetch("RAILS_MAX_THREADS", 5).to_i
   #   )
   #
-  # @example Multiple API endpoints with failover
+  # @example Several API hosts with failover (the second one is your own, e.g. a proxy)
   #   client = OctaSpace::Client.new(
   #     api_key:   ENV["OCTA_API_KEY"],
-  #     base_urls: ["https://api-dev.octa.space", "https://mirror.example"]
+  #     base_urls: [OctaSpace::DEFAULT_BASE_URL, "https://octaspace-proxy.your-company.example"]
   #   )
   #
-  # @example Without API key (public endpoints only)
+  # @example Without an API key (network and GPU statistics, machine listings)
   #   client = OctaSpace::Client.new
   #   client.network.info
   #
@@ -41,16 +41,17 @@ module OctaSpace
     attr_reader :compute
     # @return [Resources::Hosting] nodes of the account and their prices
     attr_reader :hosting
-    # @return [Resources::Network] public platform statistics
+    # @return [Resources::Network] platform statistics; no API key needed
     attr_reader :network
     # @return [Resources::Render] render nodes: list, start, start_batch
     attr_reader :render
     # @return [Resources::Sessions] running sessions: list, get, logs, stop, wait_ready, wait_stopped
     attr_reader :sessions
-    # @return [Resources::Stats] public GPU market statistics
+    # @return [Resources::Stats] GPU market statistics; no API key needed
     attr_reader :stats
 
-    # @param api_key [String, nil] API key for authentication (optional for public endpoints)
+    # @param api_key [String, nil] API key of your OctaSpace account (+octa_ak_…+); see
+    #   the README for the calls that work without one
     # @param opts [Hash] Per-instance configuration overrides.
     #   Any attribute from OctaSpace::Configuration can be passed here.
     def initialize(api_key: nil, transport: nil, **opts)

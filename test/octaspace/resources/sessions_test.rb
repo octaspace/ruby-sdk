@@ -41,7 +41,7 @@ class OctaSpace::SessionsResourceTest < Minitest::Test
 
     assert s.compute?
     assert s.ready?
-    assert_equal "M95S-WZG8-7", s.node_number
+    assert_equal "7KQ4-M2XD-4", s.node_number
     assert_equal 22, s.charge_amount
     assert_equal Time.at(1_793_639_533.878), s.started_time
     assert_nil s.ssh.direct

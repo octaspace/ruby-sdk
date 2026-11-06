@@ -19,25 +19,25 @@ module OctaSpace
       # Machines available for rent.
       # GET /services/compute
       #
-      # Works without an API key, but the anonymous listing is cached for up
-      # to an hour; with a key it is at most 10 seconds old.
+      # Works without an API key, but is then refreshed about once an hour;
+      # with a key it is at most 10 seconds old.
       # @return [Array<OctaSpace::Types::ComputeMachine>]
       def list
         Types::ComputeMachine.wrap_all(normalize_machines(get("/services/compute", auth: :optional).data))
       end
 
       # Starts one session.
-      # POST /services/compute (object → 201)
+      # POST /services/compute
       #
       # Validation and business errors ("Insufficient balance", "Node not
       # available", …) raise {OctaSpace::ValidationError}. Never retried
       # automatically: a start costs money.
       #
       # @param node_number [String] node number from the listing, e.g. "7KQ4-M2XD-4"
-      #   (case, dashes and spaces are ignored by the API)
+      #   (case, dashes and spaces are ignored)
       # @param image [String] container image, e.g. "ubuntu:24.04"
       # @param app [String, nil] application uuid
-      # @param disk_size [Integer, nil] disk, GB (API default 1)
+      # @param disk_size [Integer, nil] disk, GB (default 1)
       # @param envs [Hash{String=>String}, nil] up to 64 variables, values up to 4 KiB
       # @param ports [Array<Integer>, nil] TCP/UDP ports to expose (0 and 22 are ignored)
       # @param http_ports [Array<Integer>, nil] HTTP ports to expose (7681, 7682 are reserved)
@@ -56,7 +56,7 @@ module OctaSpace
       end
 
       # Starts several sessions at once.
-      # POST /services/compute (array → 200)
+      # POST /services/compute
       #
       # Each item is validated on its own and reported in request order; a
       # failed item does not fail the batch. Items without an +:id+ get their
@@ -70,7 +70,7 @@ module OctaSpace
 
       # Recreates the session's container on the same node, keeping the rent,
       # uuid and prices.
-      # POST /services/compute/{uuid}/restart (→ 202)
+      # POST /services/compute/{uuid}/restart
       #
       # Follow the progress with +client.sessions.get(uuid)+; if the new
       # parameters cannot be applied, the session stops.
@@ -80,8 +80,7 @@ module OctaSpace
       #   a fixed default, not its current value: +disk_size+ 1 GB,
       #   +entrypoint+/+args+ from the image, no +startup_script+, no +envs+,
       #   no +ports+/+http_ports+, +ssh+/+fm+ from the app (off without one).
-      #   The API does not report a session's launch parameters, so pass the
-      #   full set you want, +disk_size+ included.
+      #   Pass the full set you want, +disk_size+ included.
       #
       # Raises {OctaSpace::ConflictError} (409) while the session is still
       # starting or restarting, and {OctaSpace::RateLimitError} (429) when it is
