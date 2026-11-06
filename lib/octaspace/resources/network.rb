@@ -2,7 +2,7 @@
 
 module OctaSpace
   module Resources
-    # Public platform statistics; no API key needed
+    # Platform statistics; no API key needed
     #
     # @example
     #   client.network.info.nodes.online

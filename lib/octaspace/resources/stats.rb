@@ -2,12 +2,12 @@
 
 module OctaSpace
   module Resources
-    # Public GPU market statistics; no API key needed
+    # GPU market statistics; no API key needed
     #
     # @example
     #   client.stats.gpu_current.gpus.first.rented_price.p50
-    #   client.stats.gpu_history(gpu_name: "NVIDIA GeForce RTX 3090", from: Time.now - 7 * 86_400)
-    #     .fetch("NVIDIA GeForce RTX 3090").points
+    #   client.stats.gpu_history(gpu_name: "NVIDIA GeForce RTX 4090", from: Time.now - 7 * 86_400)
+    #     .fetch("NVIDIA GeForce RTX 4090").points
     class Stats < Base
       # GPU models on the market now, most common first.
       # GET /stats/gpu/current

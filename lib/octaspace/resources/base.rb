@@ -9,7 +9,7 @@ module OctaSpace
     # Delegates HTTP methods to the transport layer and provides
     # helpers shared by the resources.
     class Base
-      # Integer fields of a listing's GPU objects that nodes may send as strings
+      # Integer fields of a listing's GPU objects, read as numbers
       GPU_INTEGER_FIELDS = %w[mem_total_mb pcie_link_gen pcie_link_width core_clock mem_clock power_limit].freeze
 
       # @param transport [OctaSpace::Transport::Base]
@@ -62,8 +62,8 @@ module OctaSpace
         end
       end
 
-      # Machine listings: "null" strings become nil and string GPU integers
-      # become numbers, so one misreporting node does not break the listing.
+      # Machine listings: "null" strings become nil and numeric GPU strings
+      # become numbers.
       def normalize_machines(data)
         JsonNull.gpu_numbers!(JsonNull.null_strings!(Array(data)), GPU_INTEGER_FIELDS)
       end

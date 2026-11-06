@@ -40,7 +40,7 @@ module OctaSpace
       # @!attribute [r] disk
       #   @return [Integer] rented disk, GB
       # @!attribute [r] net_down_mbps
-      #   @return [Integer, nil] Mbit/s; nil for sessions started before the API reported it
+      #   @return [Integer, nil] Mbit/s; nil if unknown
       attribute :cpu, :cpu_cores, :total_memory, :memory_speed, :memory_type,
         :disk, :disk_type, :disk_speed_mbs, :gpu_vendor, :net_down_mbps, :net_up_mbps
       attribute :gpus, model: Gpu, many: true
@@ -49,11 +49,11 @@ module OctaSpace
     # A running session (+GET /sessions+, +GET /services/{uuid}/info+).
     #
     # {.build} returns a {ComputeSession} or a {RenderSession} by the +service+
-    # field, and a plain Session for a service this SDK does not know yet.
+    # field, and a plain Session for any other service.
     # Many fields are nil while the session is starting.
     class Session < Model
       # @!attribute [r] service
-      #   @return [String] "compute", "render", or a service added later
+      #   @return [String] "compute" or "render"
       # @!attribute [r] status
       #   @return [String] "starting" or "ready"
       # @!attribute [r] progress

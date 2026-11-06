@@ -2,7 +2,7 @@
 
 module OctaSpace
   module Types
-    # A GPU of a machine listing (+GpuNvidia+ in the API spec)
+    # A GPU of a machine listing
     class Gpu < Model
       # @!attribute [r] model
       #   @return [String] GPU model name
@@ -22,8 +22,8 @@ module OctaSpace
       def tuned? = tuned == true
     end
 
-    # Node reliability (an open object in the API). {#uptime} is the percent of
-    # time online over the last 30 days; other keys via {#[]}.
+    # Node reliability. {#uptime} is the percent of time online over the last
+    # 30 days; other keys via {#[]}.
     class Reliability < Model
       attribute :uptime, :stability, :s_normal, :s_failed, :s_avg_d, :s_max_d
     end

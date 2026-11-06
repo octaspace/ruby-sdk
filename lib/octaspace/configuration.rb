@@ -4,7 +4,8 @@ module OctaSpace
   # Default API base URL
   DEFAULT_BASE_URL = "https://api-dev.octa.space"
 
-  # Prefix of account API keys (created in Cube → Profile → Credentials)
+  # Prefix of account API keys (created in the OctaSpace dashboard under
+  # Account → Credentials → API Keys)
   API_KEY_PREFIX = "octa_ak_"
 
   # Global and per-client configuration for the OctaSpace SDK
@@ -20,18 +21,17 @@ module OctaSpace
     # --- Authentication ---
 
     # Account API key (+octa_ak_…+), sent as +Authorization: Bearer <key>+.
-    # Optional: public endpoints (network, GPU statistics, machine listings)
-    # work without it. A pasted value that already starts with "Bearer " is
-    # accepted.
+    # Network and GPU statistics and the machine listings work without it. A
+    # value that already starts with "Bearer " is accepted.
     # @return [String, nil]
     attr_reader :api_key
 
     # --- Connection ---
 
-    # @return [String] Base URL for the API (single endpoint)
+    # @return [String] Base URL of the API (one host)
     attr_accessor :base_url
 
-    # Ordered list of API endpoints. GET requests fail over to the next URL
+    # Ordered list of API hosts. GET requests fail over to the next URL
     # on network errors; requests that change state are sent to one URL only.
     # Takes precedence over {#base_url}.
     # @return [Array<String>, nil]
@@ -78,8 +78,8 @@ module OctaSpace
     # @return [Float] Longest backoff delay in seconds (without Retry-After)
     attr_accessor :max_retry_interval
 
-    # A server-supplied Retry-After longer than this (e.g. the 5-minute
-    # per-session restart cooldown) is raised to the caller instead of waited for.
+    # A Retry-After longer than this is raised to the caller instead of waited
+    # for.
     # @return [Integer] seconds
     attr_accessor :max_retry_after
 
@@ -95,9 +95,9 @@ module OctaSpace
 
     # --- Logging ---
 
-    # Logger for one line per request (method, path, status, duration).
+    # Logger for one line per request (method, URL, status, duration).
     # Headers and bodies are never logged: they carry the API key and,
-    # for sessions, URLs with credentials.
+    # for sessions, URLs that grant access.
     # @return [Logger, nil]
     attr_accessor :logger
 
@@ -106,7 +106,7 @@ module OctaSpace
 
     # --- SSL ---
 
-    # @return [Boolean] Verify SSL certificates (set false only in development/test)
+    # @return [Boolean] Verify the server's TLS certificate
     attr_accessor :ssl_verify
 
     # --- Identity ---
