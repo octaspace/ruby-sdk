@@ -4,7 +4,7 @@ require "test_helper"
 
 class OctaSpace::ComputeResourceTest < Minitest::Test
   BASE = StubHelpers::BASE_URL
-  UUID = "2a63b54f-f243-45ab-8416-2728e178a384"
+  UUID = "5f3c2b1a-7d6e-4f8a-9b0c-1d2e3f4a5b6c"
 
   def setup
     super
@@ -18,7 +18,7 @@ class OctaSpace::ComputeResourceTest < Minitest::Test
     machines = @client.compute.list
 
     assert_equal 3, machines.size
-    m = machines.find { |x| x.node_number == "M95S-WZG8-7" }
+    m = machines.find { |x| x.node_number == "7KQ4-M2XD-4" }
     assert_instance_of OctaSpace::Types::ComputeMachine, m
     assert_equal 100, m.base_price
     assert_equal 100, m.storage_price
@@ -73,11 +73,11 @@ class OctaSpace::ComputeResourceTest < Minitest::Test
 
   def test_start_sends_object_and_returns_uuid
     stub_request(:post, "#{BASE}/services/compute")
-      .with(body: {node_number: "M95S-WZG8-7", image: "alpine:3.20", disk_size: 1, envs: {"A" => "1"},
+      .with(body: {node_number: "7KQ4-M2XD-4", image: "alpine:3.20", disk_size: 1, envs: {"A" => "1"},
                    http_ports: [8080], ssh: false}.to_json)
       .to_return(status: 201, body: %({"uuid":"#{UUID}"}))
 
-    uuid = @client.compute.start(node_number: "M95S-WZG8-7", image: "alpine:3.20", disk_size: 1,
+    uuid = @client.compute.start(node_number: "7KQ4-M2XD-4", image: "alpine:3.20", disk_size: 1,
       envs: {"A" => "1"}, http_ports: [8080], ssh: false, fm: nil)
     assert_equal UUID, uuid
   end
@@ -117,7 +117,7 @@ class OctaSpace::ComputeResourceTest < Minitest::Test
     results = @client.compute.start_batch([{id: "one", node_number: "A", image: "x"}, {node_number: "B", image: "x"}])
     assert_equal 3, results.size
     assert results[0].started?
-    assert_equal "eeda4f74-0ccb-420e-b718-3f0ec56e397f", results[0].uuid
+    assert_equal "8e1d4c7b-2a9f-4e3d-b6c5-0f1a2b3c4d5e", results[0].uuid
     assert results[1].failed?
     assert_equal "two", results[1].id
     assert_match(/node_number must be/, results[1].reason)

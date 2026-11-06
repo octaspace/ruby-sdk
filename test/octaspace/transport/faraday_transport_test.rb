@@ -33,10 +33,10 @@ class OctaSpace::FaradayTransportTest < Minitest::Test
 
   def test_post_sends_json_body
     stub_request(:post, "#{BASE}/services/compute")
-      .with(body: '{"node_number":"M95S-WZG8-7"}', headers: {"Content-Type" => "application/json"})
+      .with(body: '{"node_number":"7KQ4-M2XD-4"}', headers: {"Content-Type" => "application/json"})
       .to_return(status: 201, body: '{"uuid":"u"}', headers: JSON_HEADERS)
 
-    assert_equal "u", transport.post("/services/compute", body: {node_number: "M95S-WZG8-7"}).data["uuid"]
+    assert_equal "u", transport.post("/services/compute", body: {node_number: "7KQ4-M2XD-4"}).data["uuid"]
   end
 
   def test_empty_body_on_204_and_202
