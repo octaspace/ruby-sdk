@@ -36,7 +36,7 @@ module OctaSpace
   #   )
   class Client
     attr_reader :accounts, :nodes, :sessions, :apps,
-      :network, :services, :idle_jobs
+      :network, :services, :idle_jobs, :compute, :render
 
     # @param api_key [String, nil] API key for authentication (optional for public endpoints)
     # @param opts [Hash] Per-instance configuration overrides.
@@ -51,6 +51,8 @@ module OctaSpace
       @network = Resources::Network.new(@transport)
       @services = Resources::Services.new(@transport)
       @idle_jobs = Resources::IdleJobs.new(@transport)
+      @compute = Resources::Compute.new(@transport)
+      @render = Resources::Render.new(@transport)
     end
 
     # Shut down persistent connections (only relevant in keep_alive mode)

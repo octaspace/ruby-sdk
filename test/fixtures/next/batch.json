@@ -1,0 +1,17 @@
+[
+ {
+  "id": 1,
+  "status": 0,
+  "uuid": "eeda4f74-0ccb-420e-b718-3f0ec56e397f"
+ },
+ {
+  "id": "two",
+  "reason": "node_number must be a node number, e.g. 7KQ4-M2XD-4",
+  "status": 1
+ },
+ {
+  "id": 3,
+  "reason": "image is required",
+  "status": 1
+ }
+]
