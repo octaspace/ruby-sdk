@@ -1,6 +1,17 @@
 # frozen_string_literal: true
 
 module OctaSpace
+  # Test stand of the next-generation OctaSpace API. It is the default base URL
+  # until the production host of the new API is announced: the production hosts
+  # (+api.octa.computer+, +api.octa.space+) still serve the legacy API.
+  BASE_URL_DEV = "https://api-dev.octa.space"
+
+  # Default API base URL
+  DEFAULT_BASE_URL = BASE_URL_DEV
+
+  # Prefix of the account API keys issued in Cube (Profile → Credentials)
+  API_KEY_PREFIX = "octa_ak_"
+
   # Global and per-client configuration for the OctaSpace SDK
   #
   # @example Global configuration (Rails initializer)
@@ -13,15 +24,22 @@ module OctaSpace
   class Configuration
     # --- Authentication ---
 
-    # @return [String, nil] API key for Authorization header
-    attr_accessor :api_key
+    # Account API key (+octa_ak_…+), sent as +Authorization: Bearer <key>+.
+    # Optional: public endpoints (network, GPU statistics, machine listings)
+    # work without it. A pasted value that already starts with "Bearer " is
+    # accepted.
+    # @return [String, nil]
+    attr_reader :api_key
 
     # --- Connection ---
 
     # @return [String] Base URL for the API (single endpoint)
     attr_accessor :base_url
 
-    # @return [Array<String>, nil] Multiple API endpoints — enables URL rotation/failover
+    # Ordered list of API endpoints. GET requests fail over to the next URL
+    # on network errors; requests that change state are sent to one URL only.
+    # Takes precedence over {#base_url}.
+    # @return [Array<String>, nil]
     attr_accessor :base_urls
 
     # @return [Integer] Seconds to wait for connection to open
@@ -49,6 +67,9 @@ module OctaSpace
     attr_accessor :idle_timeout
 
     # --- Retry ---
+    # Only GET requests and the idempotent session stop are retried, on network
+    # errors and on 429/502/503/504. Starting or restarting a service is never
+    # retried: it costs money and is rate limited.
 
     # @return [Integer] Maximum number of retries on transient failures
     attr_accessor :max_retries
@@ -59,9 +80,19 @@ module OctaSpace
     # @return [Float] Exponential backoff multiplier
     attr_accessor :backoff_factor
 
+    # @return [Float] Longest backoff delay in seconds (without Retry-After)
+    attr_accessor :max_retry_interval
+
+    # A server-supplied Retry-After longer than this (e.g. the 5-minute
+    # per-session restart cooldown) is raised to the caller instead of waited for.
+    # @return [Integer] seconds
+    attr_accessor :max_retry_after
+
     # --- Hooks ---
 
-    # @return [#call, nil] Callable invoked before each request; receives request context hash
+    # @return [#call, nil] Callable invoked before each request attempt; receives
+    #   a Hash with :method, :url, :path, :params and :attempt (never the headers,
+    #   so the API key does not leak into logs)
     attr_accessor :on_request
 
     # @return [#call, nil] Callable invoked after each response; receives OctaSpace::Response
@@ -69,7 +100,10 @@ module OctaSpace
 
     # --- Logging ---
 
-    # @return [Logger, nil] Ruby Logger instance (or any object responding to #debug/#info/#warn/#error)
+    # Logger for one line per request (method, path, status, duration).
+    # Headers and bodies are never logged: they carry the API key and,
+    # for sessions, URLs with credentials.
+    # @return [Logger, nil]
     attr_accessor :logger
 
     # @return [Symbol] Log level (:debug, :info, :warn, :error)
@@ -86,7 +120,7 @@ module OctaSpace
     attr_accessor :user_agent
 
     DEFAULTS = {
-      base_url: "https://api.octa.space",
+      base_url: DEFAULT_BASE_URL,
       open_timeout: 10,
       read_timeout: 30,
       write_timeout: 30,
@@ -97,6 +131,8 @@ module OctaSpace
       max_retries: 2,
       retry_interval: 0.5,
       backoff_factor: 2.0,
+      max_retry_interval: 10.0,
+      max_retry_after: 60,
       ssl_verify: true,
       log_level: :info
     }.freeze
@@ -106,6 +142,17 @@ module OctaSpace
       @user_agent = "octaspace-ruby/#{OctaSpace::VERSION} Ruby/#{RUBY_VERSION}"
     end
 
+    # Sets the API key; surrounding whitespace and a leading "Bearer " are
+    # removed, and an empty value means no key.
+    # @param value [String, nil]
+    def api_key=(value)
+      key = value.to_s.strip.sub(/\Abearer\s+/i, "")
+      @api_key = key.empty? ? nil : key
+    end
+
+    # @return [Boolean] whether an API key is configured
+    def api_key? = !api_key.nil?
+
     # Alias: `persistent` is the Cube-internal term; `keep_alive` is the public SDK term
     alias_method :persistent, :keep_alive
     alias_method :persistent=, :keep_alive=
@@ -113,12 +160,12 @@ module OctaSpace
     # @return [Boolean]
     def keep_alive? = !!keep_alive
 
-    # Returns effective list of API URLs.
+    # Returns effective list of API URLs, without trailing slashes.
     # base_urls takes priority over base_url; always returns an Array.
     # @return [Array<String>]
     def urls
-      candidates = Array(base_urls).map(&:to_s).reject(&:empty?)
-      candidates.empty? ? Array(base_url).map(&:to_s).reject(&:empty?) : candidates
+      candidates = clean_urls(base_urls)
+      candidates.empty? ? clean_urls(base_url) : candidates
     end
 
     # Deep-clone configuration for per-client overrides
@@ -131,6 +178,12 @@ module OctaSpace
         copy.instance_variable_set(var, instance_variable_get(var))
       end
       copy
+    end
+
+    private
+
+    def clean_urls(value)
+      Array(value).map { |url| url.to_s.strip.sub(%r{/+\z}, "") }.reject(&:empty?)
     end
   end
 end

@@ -1,116 +1,185 @@
 # frozen_string_literal: true
 
 require "faraday"
-require "faraday/retry"
+require "json"
 
 module OctaSpace
   module Transport
     # Standard HTTP transport built on Faraday
     #
-    # Features:
-    # - Automatic JSON request/response encoding
-    # - Configurable retry with exponential backoff + jitter
-    # - URL rotation / failover across multiple base_urls
-    # - on_request / on_response hooks
-    # - Typed exception hierarchy mapped from HTTP status codes
+    # - +Authorization: Bearer <api_key>+ per endpoint auth mode
+    # - JSON request encoding and response parsing (empty 202/204 bodies are fine)
+    # - Retries with exponential backoff and jitter for GET and idempotent
+    #   requests only, honouring Retry-After up to {Configuration#max_retry_after}
+    # - Failover across several base URLs for GET requests on network errors;
+    #   requests that change state are never sent to a second host
+    # - on_request / on_response hooks, one log line per request
+    # - Typed exceptions mapped from HTTP status codes
     #
     # @example
     #   config = OctaSpace::Configuration.new
-    #   config.api_key = "my_key"
+    #   config.api_key = "octa_ak_..."
     #   transport = OctaSpace::Transport::FaradayTransport.new(config)
-    #   response = transport.get("/nodes")
+    #   transport.get("/accounts/balance").data
     class FaradayTransport < Base
-      RETRY_STATUSES = [408, 429, 500, 502, 503, 504].freeze
-      RETRY_METHODS = %i[get head options put delete].freeze
+      # Statuses worth retrying: rate limit and transient gateway/backend failures
+      RETRY_STATUSES = [429, 502, 503, 504].freeze
 
-      def initialize(config)
+      # @param config [OctaSpace::Configuration]
+      # @param sleeper [#call] waits the given number of seconds between retries
+      def initialize(config, sleeper: ->(seconds) { sleep(seconds) })
         @config = config
-        @rotator = (config.urls.size > 1) ? Middleware::UrlRotator.new(config.urls) : nil
-        # Single URL: build one connection upfront for reuse
-        @connection = build_connection(config.urls.first) unless @rotator
+        @urls = config.urls.freeze
+        raise ConfigurationError, "At least one base URL is required" if @urls.empty?
+
+        @rotator = (@urls.size > 1) ? Middleware::UrlRotator.new(@urls) : nil
+        @sleeper = sleeper
+        @connections = {}
+        @mutex = Mutex.new
+        @rate_limit = nil
       end
 
-      def get(path, params: {}, headers: {})
-        request(:get, path, params: params, headers: headers)
+      # (see Base#request)
+      def request(method, path, params: {}, body: nil, auth: :required, idempotent: false)
+        method = method.to_sym
+        headers = build_headers(method, path, auth, body)
+        retryable = method == :get || idempotent
+        attempt = 0
+
+        begin
+          with_failover(method) do |url|
+            perform(url, method, path, params: params, body: body, headers: headers, attempt: attempt)
+          end
+        rescue NetworkError, ApiError => e
+          delay = (retryable && attempt < config.max_retries) ? retry_delay(e, attempt) : nil
+          raise if delay.nil?
+
+          @sleeper.call(delay) if delay.positive?
+          attempt += 1
+          retry
+        end
       end
 
-      def post(path, body: nil, headers: {})
-        request(:post, path, body: body, headers: headers)
-      end
+      # (see Base#rate_limit)
+      def rate_limit = @mutex.synchronize { @rate_limit }
 
-      def put(path, body: nil, headers: {})
-        request(:put, path, body: body, headers: headers)
-      end
-
-      def patch(path, body: nil, headers: {})
-        request(:patch, path, body: body, headers: headers)
-      end
-
-      def delete(path, params: {}, headers: {})
-        request(:delete, path, params: params, headers: headers)
+      # @return [Hash] transport diagnostics
+      def transport_stats
+        stats = {mode: :standard, urls: @urls}
+        stats[:rotator] = @rotator.stats if @rotator
+        stats
       end
 
       private
 
       attr_reader :config
 
-      # Execute HTTP request with optional URL rotation
-      def request(method, path, params: {}, body: nil, headers: {})
-        invoke_hook(config.on_request, {method: method, path: path, params: params})
-
-        with_failover do |base_url|
-          conn = @rotator ? build_connection(base_url) : @connection
-          begin
-            faraday_resp = execute(conn, method, path, params: params, body: body, headers: headers)
-          rescue Faraday::ConnectionFailed => e
-            raise ConnectionError, e.message
-          rescue Faraday::TimeoutError => e
-            raise TimeoutError, e.message
-          end
-          response = Response.new(faraday_resp)
-          invoke_hook(config.on_response, response)
-          raise OctaSpace.error_for(response) if response.error?
-          response
-        end
-      end
-
-      # Execute a single Faraday request
-      def execute(conn, method, path, params: {}, body: nil, headers: {})
-        conn.public_send(method, path) do |req|
-          req.headers.merge!(default_headers.merge(headers))
-          req.params.merge!(params) if params.any?
-          req.body = body.to_json if body
-        end
-      end
-
-      # Try each URL in rotation; mark failures and retry
-      def with_failover(&block)
-        urls = @rotator ? @config.urls.dup : [nil]
-        tried = []
+      # GET requests try every URL in rotation order on network errors; other
+      # methods go to a single URL so a request that changes state (and may
+      # have reached the server before a timeout) is never sent twice.
+      def with_failover(method)
+        first = @rotator ? @rotator.next_url : @urls.first
+        urls = (method == :get) ? [first, *(@urls - [first])] : [first]
         last_error = nil
 
         urls.each do |url|
-          next if tried.include?(url)
-          tried << url
-
-          begin
-            return yield(url)
-          rescue ConnectionError, TimeoutError => e
-            last_error = e
-            @rotator&.mark_failed(url)
-          end
+          response = yield(url)
+          @rotator&.mark_success(url)
+          return response
+        rescue NetworkError => e
+          @rotator&.mark_failed(url)
+          last_error = e
         end
 
-        raise last_error || ConnectionError.new("All API endpoints unavailable")
+        raise last_error
       end
 
-      # Build a Faraday connection for a given base URL
+      def perform(base_url, method, path, params:, body:, headers:, attempt:)
+        query = params.to_h.compact
+        invoke_hook(config.on_request,
+          {method: method, url: "#{base_url}#{path}", path: path, params: query, attempt: attempt})
+
+        started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        raw = begin
+          execute(connection_for(base_url), method, path.delete_prefix("/"),
+            query: query, payload: body.nil? ? nil : JSON.generate(body), headers: headers)
+        rescue Faraday::TimeoutError => e
+          log(method, base_url, path, "timeout", started)
+          raise TimeoutError, "Request timed out: #{e.message}"
+        rescue Faraday::ConnectionFailed, Faraday::SSLError => e
+          log(method, base_url, path, "connection failed", started)
+          raise ConnectionError, e.message
+        end
+        log(method, base_url, path, raw.status, started)
+
+        response = build_response(raw)
+        if (rate_limit = response.rate_limit)
+          @mutex.synchronize { @rate_limit = rate_limit }
+        end
+        invoke_hook(config.on_response, response)
+        raise OctaSpace.error_for(response, api_key: headers.key?("Authorization") ? config.api_key : nil) if response.error?
+
+        response
+      end
+
+      # Overridden by PersistentTransport to run the request on a pooled connection
+      def execute(conn, method, path, query:, payload:, headers:)
+        conn.run_request(method, path, payload, headers) do |req|
+          req.params.update(query) unless query.empty?
+        end
+      end
+
+      def build_response(raw)
+        text = raw.body.to_s
+        data = nil
+        unless text.strip.empty?
+          begin
+            data = JSON.parse(text)
+          rescue JSON::ParserError
+            # E.g. a proxy or captive portal answering 200 with an HTML page.
+            if (200..299).cover?(raw.status)
+              response = Response.new(status: raw.status, headers: raw.headers, body: text)
+              raise ApiError.new("Response is not valid JSON (status #{raw.status})", response: response)
+            end
+          end
+        end
+        Response.new(status: raw.status, headers: raw.headers, body: text, data: data)
+      end
+
+      def build_headers(method, path, auth, body)
+        headers = {"User-Agent" => config.user_agent, "Accept" => "application/json"}
+        headers["Content-Type"] = "application/json" unless body.nil?
+
+        unless auth == :none
+          if config.api_key?
+            headers["Authorization"] = "Bearer #{config.api_key}"
+          elsif auth == :required
+            raise AuthenticationError,
+              "api_key is required for #{method.upcase} #{path}: pass an API key " \
+              "(#{API_KEY_PREFIX}…) issued in Cube → Profile → Credentials"
+          end
+        end
+        headers
+      end
+
+      # Seconds to wait before the next attempt, or nil when the error must be raised
+      def retry_delay(error, attempt)
+        return nil if error.is_a?(ApiError) && !RETRY_STATUSES.include?(error.status)
+
+        retry_after = error.is_a?(ApiError) ? error.retry_after : nil
+        return nil if retry_after && retry_after > config.max_retry_after
+        return retry_after if retry_after
+
+        cap = [config.max_retry_interval.to_f, config.retry_interval.to_f * (config.backoff_factor.to_f**attempt)].min
+        rand * cap
+      end
+
+      def connection_for(base_url)
+        @mutex.synchronize { @connections[base_url] ||= build_connection(base_url) }
+      end
+
       def build_connection(base_url)
         Faraday.new(url: base_url, request: request_options, ssl: ssl_options) do |f|
-          f.request :json
-          f.request :retry, retry_options
-          f.response :json, content_type: /\bjson/
-          f.response :logger, config.logger, {headers: true, bodies: false} if config.logger
           configure_adapter(f)
         end
       end
@@ -118,26 +187,6 @@ module OctaSpace
       # Override in PersistentTransport
       def configure_adapter(builder)
         builder.adapter :net_http
-      end
-
-      def default_headers
-        headers = {
-          "User-Agent" => config.user_agent,
-          "Accept" => "application/json"
-        }
-        headers["Authorization"] = config.api_key if config.api_key && !config.api_key.empty?
-        headers
-      end
-
-      def retry_options
-        {
-          max: config.max_retries,
-          interval: config.retry_interval,
-          interval_randomness: 0.5,
-          backoff_factor: config.backoff_factor,
-          retry_statuses: RETRY_STATUSES,
-          methods: RETRY_METHODS
-        }
       end
 
       def request_options
@@ -150,6 +199,14 @@ module OctaSpace
 
       def ssl_options
         {verify: config.ssl_verify}
+      end
+
+      def log(method, base_url, path, outcome, started)
+        return unless config.logger
+
+        ms = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round
+        config.logger.public_send(config.log_level || :info,
+          "[OctaSpace] #{method.upcase} #{base_url}#{path} -> #{outcome} (#{ms} ms)")
       end
 
       def invoke_hook(hook, *args)

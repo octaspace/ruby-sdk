@@ -5,47 +5,47 @@ module OctaSpace
     # Abstract base class for HTTP transports
     #
     # Concrete implementations: FaradayTransport (standard) and
-    # PersistentTransport (keep-alive with connection pooling).
+    # PersistentTransport (keep-alive with connection pooling). A custom
+    # transport (e.g. for tests) only needs to implement {#request}.
     class Base
-      # @param path [String]
-      # @param params [Hash]
-      # @param headers [Hash]
+      # Perform a request and return the response, or raise an OctaSpace::Error.
+      #
+      # @param method [Symbol] :get, :post, :patch, :put or :delete
+      # @param path [String] API path, e.g. "/services/compute"
+      # @param params [Hash] query parameters (nil values are dropped)
+      # @param body [Hash, Array, nil] JSON body
+      # @param auth [Symbol] :required (raise AuthenticationError without a key),
+      #   :optional (send the key when configured) or :none (never send it)
+      # @param idempotent [Boolean] allow retries for a non-GET request the API
+      #   documents as idempotent
       # @return [OctaSpace::Response]
-      def get(path, params: {}, headers: {})
-        raise NotImplementedError, "#{self.class}#get not implemented"
+      def request(method, path, params: {}, body: nil, auth: :required, idempotent: false)
+        raise NotImplementedError, "#{self.class}#request not implemented"
       end
 
-      # @param path [String]
-      # @param body [Hash, nil]
-      # @param headers [Hash]
-      # @return [OctaSpace::Response]
-      def post(path, body: nil, headers: {})
-        raise NotImplementedError, "#{self.class}#post not implemented"
+      def get(path, params: {}, auth: :required)
+        request(:get, path, params: params, auth: auth)
       end
 
-      # @param path [String]
-      # @param body [Hash, nil]
-      # @param headers [Hash]
-      # @return [OctaSpace::Response]
-      def put(path, body: nil, headers: {})
-        raise NotImplementedError, "#{self.class}#put not implemented"
+      def post(path, body: nil, auth: :required, idempotent: false)
+        request(:post, path, body: body, auth: auth, idempotent: idempotent)
       end
 
-      # @param path [String]
-      # @param body [Hash, nil]
-      # @param headers [Hash]
-      # @return [OctaSpace::Response]
-      def patch(path, body: nil, headers: {})
-        raise NotImplementedError, "#{self.class}#patch not implemented"
+      def patch(path, body: nil, auth: :required)
+        request(:patch, path, body: body, auth: auth)
       end
 
-      # @param path [String]
-      # @param params [Hash]
-      # @param headers [Hash]
-      # @return [OctaSpace::Response]
-      def delete(path, params: {}, headers: {})
-        raise NotImplementedError, "#{self.class}#delete not implemented"
+      def put(path, body: nil, auth: :required)
+        request(:put, path, body: body, auth: auth)
       end
+
+      def delete(path, params: {}, auth: :required)
+        request(:delete, path, params: params, auth: auth)
+      end
+
+      # @return [OctaSpace::RateLimit, nil] rate limit state of the most recent
+      #   response that carried RateLimit-* headers
+      def rate_limit = nil
     end
   end
 end

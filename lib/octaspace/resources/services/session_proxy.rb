@@ -46,7 +46,7 @@ module OctaSpace
         # @param params [Hash] e.g. { score: 5 }
         # @return [OctaSpace::Response]
         def stop(**params)
-          @transport.post("/services/#{@uuid}/stop", body: params.empty? ? nil : params)
+          @transport.post("/services/#{@uuid}/stop", body: params.empty? ? nil : params, idempotent: true)
         end
       end
     end

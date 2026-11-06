@@ -61,15 +61,14 @@ module OctaSpace
     # Transport diagnostics (pool stats when in keep_alive mode)
     # @return [Hash]
     def transport_stats
-      if @transport.respond_to?(:transport_stats)
-        @transport.transport_stats
-      elsif @transport.respond_to?(:pool_stats)
-        {mode: :persistent, pools: @transport.pool_stats}
-      elsif @config.urls.size > 1
-        {mode: :standard, rotator: @transport.instance_variable_get(:@rotator)&.stats}
-      else
-        {mode: :standard, url: @config.urls.first}
-      end
+      @transport.respond_to?(:transport_stats) ? @transport.transport_stats : {mode: :custom}
+    end
+
+    # Rate limit state (RateLimit-* headers) of the most recent response that
+    # carried them, or nil before the first such response.
+    # @return [OctaSpace::RateLimit, nil]
+    def rate_limit
+      @transport.respond_to?(:rate_limit) ? @transport.rate_limit : nil
     end
 
     private

@@ -14,7 +14,7 @@ module OctaSpace
         # @param params [Hash] optional filter params
         # @return [OctaSpace::Response]
         def list(**params)
-          get("/services/render", params:)
+          get("/services/render", params:, auth: :optional)
         end
 
         # Create (start) a render job

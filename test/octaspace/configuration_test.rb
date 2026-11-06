@@ -5,7 +5,7 @@ require "test_helper"
 class OctaSpace::ConfigurationTest < Minitest::Test
   def test_defaults
     config = OctaSpace::Configuration.new
-    assert_equal "https://api.octa.space", config.base_url
+    assert_equal "https://api-dev.octa.space", config.base_url
     assert_equal 10, config.open_timeout
     assert_equal 30, config.read_timeout
     assert_equal false, config.keep_alive
@@ -52,6 +52,23 @@ class OctaSpace::ConfigurationTest < Minitest::Test
     config = OctaSpace::Configuration.new
     assert_includes config.user_agent, OctaSpace::VERSION
     assert_includes config.user_agent, RUBY_VERSION
+  end
+
+  def test_api_key_is_normalized
+    config = OctaSpace::Configuration.new
+    config.api_key = "  Bearer octa_ak_x \n"
+    assert_equal "octa_ak_x", config.api_key
+    assert config.api_key?
+
+    config.api_key = "   "
+    assert_nil config.api_key
+    refute config.api_key?
+  end
+
+  def test_urls_strip_trailing_slashes_and_blanks
+    config = OctaSpace::Configuration.new
+    config.base_urls = ["https://a.example/", "", " https://b.example// "]
+    assert_equal ["https://a.example", "https://b.example"], config.urls
   end
 
   def test_configure_block
