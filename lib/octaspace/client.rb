@@ -35,8 +35,20 @@ module OctaSpace
   #     on_response: ->(resp) { puts "← #{resp.status}" }
   #   )
   class Client
-    attr_reader :accounts, :nodes, :sessions, :apps,
-      :network, :idle_jobs, :compute, :render
+    # @return [Resources::Accounts] balance
+    attr_reader :accounts
+    # @return [Resources::Compute] machines for rent: list, start, start_batch, restart
+    attr_reader :compute
+    # @return [Resources::Hosting] nodes of the account and their prices
+    attr_reader :hosting
+    # @return [Resources::Network] public platform statistics
+    attr_reader :network
+    # @return [Resources::Render] render nodes: list, start, start_batch
+    attr_reader :render
+    # @return [Resources::Sessions] running sessions: list, get, logs, stop, wait_ready, wait_stopped
+    attr_reader :sessions
+    # @return [Resources::Stats] public GPU market statistics
+    attr_reader :stats
 
     # @param api_key [String, nil] API key for authentication (optional for public endpoints)
     # @param opts [Hash] Per-instance configuration overrides.
@@ -45,13 +57,12 @@ module OctaSpace
       @config = build_config(api_key, opts)
       @transport = transport || build_transport
       @accounts = Resources::Accounts.new(@transport)
-      @nodes = Resources::Nodes.new(@transport)
-      @sessions = Resources::Sessions.new(@transport)
-      @apps = Resources::Apps.new(@transport)
-      @network = Resources::Network.new(@transport)
-      @idle_jobs = Resources::IdleJobs.new(@transport)
       @compute = Resources::Compute.new(@transport)
+      @hosting = Resources::Hosting.new(@transport)
+      @network = Resources::Network.new(@transport)
       @render = Resources::Render.new(@transport)
+      @sessions = Resources::Sessions.new(@transport)
+      @stats = Resources::Stats.new(@transport)
     end
 
     # Shut down persistent connections (only relevant in keep_alive mode)
