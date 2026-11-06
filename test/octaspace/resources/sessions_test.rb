@@ -18,7 +18,7 @@ class OctaSpace::SessionsResourceTest < Minitest::Test
   # --- list / get ---
 
   def test_list_builds_sessions_by_service
-    body = [JSON.parse(fixture("next/session_compute_ready.json")),
+    body = [JSON.parse(fixture("session_compute_ready.json")),
       {"service" => "render", "uuid" => "r", "status" => "ready", "duration" => 1},
       {"service" => "vpn", "uuid" => "v", "status" => "ready", "duration" => 1, "config" => "x"}]
     stub_request(:get, "#{BASE}/sessions").to_return(status: 200, body: body.to_json)
@@ -36,12 +36,12 @@ class OctaSpace::SessionsResourceTest < Minitest::Test
   end
 
   def test_get_parses_a_ready_compute_session
-    stub_request(:get, info_url).to_return(status: 200, body: fixture("next/session_compute_ssh_proxy.json"))
+    stub_request(:get, info_url).to_return(status: 200, body: fixture("session_compute_ssh_proxy.json"))
     s = @client.sessions.get(UUID)
 
     assert s.compute?
     assert s.ready?
-    assert_equal "M95S-WZG8-7", s.node_number
+    assert_equal "7KQ4-M2XD-4", s.node_number
     assert_equal 22, s.charge_amount
     assert_equal Time.at(1_793_639_533.878), s.started_time
     assert_nil s.ssh.direct
@@ -54,7 +54,7 @@ class OctaSpace::SessionsResourceTest < Minitest::Test
   end
 
   def test_starting_session_has_nil_fields
-    stub_request(:get, info_url).to_return(status: 200, body: fixture("next/session_compute_starting.json"))
+    stub_request(:get, info_url).to_return(status: 200, body: fixture("session_compute_starting.json"))
     s = @client.sessions.get(UUID)
 
     assert s.starting?
@@ -62,7 +62,7 @@ class OctaSpace::SessionsResourceTest < Minitest::Test
   end
 
   def test_net_speed_in_node_hw
-    stub_request(:get, info_url).to_return(status: 200, body: fixture("next/session_compute_net_mbps.json"))
+    stub_request(:get, info_url).to_return(status: 200, body: fixture("session_compute_net_mbps.json"))
     hw = @client.sessions.get(UUID).node_hw
 
     assert_kind_of Integer, hw.net_down_mbps
@@ -70,7 +70,7 @@ class OctaSpace::SessionsResourceTest < Minitest::Test
   end
 
   def test_inspect_redacts_access_urls
-    data = JSON.parse(fixture("next/session_compute_ssh_proxy.json"))
+    data = JSON.parse(fixture("session_compute_ssh_proxy.json"))
     data["fm"] = "https://fm.example/secret"
     data["ssh"]["web"] = "https://user:pass@term.example"
     stub_request(:get, info_url).to_return(status: 200, body: data.to_json)
@@ -98,7 +98,7 @@ class OctaSpace::SessionsResourceTest < Minitest::Test
   # --- logs ---
 
   def test_logs
-    stub_request(:get, "#{BASE}/services/#{UUID}/logs").to_return(status: 200, body: fixture("next/session_logs.json"))
+    stub_request(:get, "#{BASE}/services/#{UUID}/logs").to_return(status: 200, body: fixture("session_logs.json"))
     logs = @client.sessions.logs(UUID)
 
     assert_kind_of OctaSpace::Types::LogEntry, logs.system.first
@@ -137,8 +137,8 @@ class OctaSpace::SessionsResourceTest < Minitest::Test
 
   def test_wait_ready_polls_and_yields_progress
     stub_request(:get, info_url).to_return(
-      {status: 200, body: fixture("next/session_compute_starting.json")},
-      {status: 200, body: fixture("next/session_compute_ready.json")}
+      {status: 200, body: fixture("session_compute_starting.json")},
+      {status: 200, body: fixture("session_compute_ready.json")}
     )
     seen = []
     session = @sessions.wait_ready(UUID, interval: 2) { |s| seen << s.status }
@@ -150,7 +150,7 @@ class OctaSpace::SessionsResourceTest < Minitest::Test
 
   def test_wait_ready_raises_when_session_stops
     stub_request(:get, info_url).to_return(
-      {status: 200, body: fixture("next/session_compute_starting.json")},
+      {status: 200, body: fixture("session_compute_starting.json")},
       {status: 404, body: '{"message":"Session not found"}'}
     )
 
@@ -160,14 +160,14 @@ class OctaSpace::SessionsResourceTest < Minitest::Test
   end
 
   def test_wait_ready_times_out
-    stub_request(:get, info_url).to_return(status: 200, body: fixture("next/session_compute_starting.json"))
+    stub_request(:get, info_url).to_return(status: 200, body: fixture("session_compute_starting.json"))
 
     assert_raises(OctaSpace::WaitTimeoutError) { @sessions.wait_ready(UUID, timeout: 1, interval: 5) }
   end
 
   def test_wait_stopped
     stub_request(:get, info_url).to_return(
-      {status: 200, body: fixture("next/session_compute_ready.json")},
+      {status: 200, body: fixture("session_compute_ready.json")},
       {status: 404, body: '{"message":"Session not found"}'}
     )
 

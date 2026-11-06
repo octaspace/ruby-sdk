@@ -15,7 +15,7 @@ module OctaSpace
       # @return [Rational] the balance in currency units, exactly
       def to_usd = Money.to_usd(balance, decimals: decimals)
 
-      # @return [String] e.g. "$2.147661"
+      # @return [String] e.g. "$12.500000"
       def formatted = Money.format(balance, decimals: decimals)
 
       def negative? = balance.negative?

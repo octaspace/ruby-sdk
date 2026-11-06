@@ -9,7 +9,7 @@ module OctaSpace
     # session history.
     #
     # @example
-    #   uuid = client.compute.start(node_number: "M95S-WZG8-7", image: "ubuntu:24.04")
+    #   uuid = client.compute.start(node_number: "7KQ4-M2XD-4", image: "ubuntu:24.04")
     #   session = client.sessions.wait_ready(uuid) { |s| puts "#{s.progress} #{s.pull_percent}" }
     #   client.sessions.logs(uuid, tail: 50).container
     #   client.sessions.stop(uuid)
@@ -49,14 +49,14 @@ module OctaSpace
       #
       # Render sessions have no logs; a stopped session's logs are gone (404).
       # @param uuid [String]
-      # @param tail [Integer, nil] last lines of container output, 1..1000 (API default 200)
+      # @param tail [Integer, nil] last lines of container output, 1..1000 (default 200)
       # @return [OctaSpace::Types::SessionLogs]
       def logs(uuid, tail: nil)
         Types::SessionLogs.new(get_raw(session_path(uuid, "logs"), params: {tail: tail}).data)
       end
 
       # Stops a session.
-      # POST /services/{uuid}/stop (→ 202)
+      # POST /services/{uuid}/stop
       #
       # Stopping is asynchronous: the session is gone once {#get} raises
       # NotFoundError (see {#wait_stopped}). Repeating the call while the

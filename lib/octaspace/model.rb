@@ -4,14 +4,13 @@ module OctaSpace
   # Read-only view over a JSON object returned by the API.
   #
   # Declared attributes get reader methods; nested objects and arrays of
-  # objects are wrapped in their own model classes. Fields the SDK does not
-  # know yet are kept and reachable with {#[]} and {#to_h}, so a new field in
-  # the API (it is in active development) never breaks parsing.
+  # objects are wrapped in their own model classes. Fields without a reader
+  # are kept and reachable with {#[]} and {#to_h}.
   #
   # @example
   #   machine = client.compute.list.first
-  #   machine.node_number      # => "M95S-WZG8-7"
-  #   machine.gpus.first.model # => "NVIDIA GeForce RTX 3090"
+  #   machine.node_number      # => "7KQ4-M2XD-4"
+  #   machine.gpus.first.model # => "NVIDIA GeForce RTX 4090"
   #   machine[:new_field]      # => value of a field the SDK has no reader for
   #   machine.to_h             # => the JSON object as parsed
   class Model

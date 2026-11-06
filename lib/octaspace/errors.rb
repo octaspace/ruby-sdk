@@ -32,7 +32,7 @@ module OctaSpace
   class WaitTimeoutError < TimeoutError; end
 
   # An HTTP 4xx/5xx response from the API, or a 2xx response the SDK could not
-  # read. The next API answers errors as +{"message": "..."}+; the message is
+  # read. The API answers errors as +{"message": "..."}+; the message is
   # used as the exception message.
   class ApiError < Error
     # @return [Integer, nil] seconds to wait before retrying (Retry-After header)
@@ -55,8 +55,7 @@ module OctaSpace
   # (for example "tail must be 1..1000" or "Invalid node number").
   class ValidationError < ApiError; end
 
-  # 401: the API key is missing or invalid. The next API expects
-  # +Authorization: Bearer octa_ak_…+; legacy account tokens are refused.
+  # 401: the API key is missing, wrong or deleted. Keys start with +octa_ak_+.
   # Also raised before any request when an endpoint needs a key and the
   # client has none.
   class AuthenticationError < ApiError; end
@@ -84,8 +83,7 @@ module OctaSpace
   class ServerError < ApiError; end
   class BadGatewayError < ServerError; end # 502
 
-  # 503: a backend the API depends on (render nodes, statistics, …) is
-  # temporarily unavailable. The request itself was fine; retry later.
+  # 503: the service is temporarily unavailable; retry later.
   class ServiceUnavailableError < ServerError; end
 
   class GatewayTimeoutError < ServerError; end # 504
@@ -117,8 +115,7 @@ module OctaSpace
     end
     message = error_message(response)
     if response.status == 401 && api_key && !api_key.start_with?(API_KEY_PREFIX)
-      message += " (the next API expects a key starting with \"#{API_KEY_PREFIX}\"; " \
-                 "legacy account tokens are not accepted)"
+      message += " (API keys start with \"#{API_KEY_PREFIX}\"; create one in the OctaSpace dashboard under Account → Credentials → API Keys)"
     end
     klass.new(message, response: response)
   end

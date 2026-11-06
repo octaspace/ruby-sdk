@@ -8,22 +8,23 @@ Gem::Specification.new do |spec|
   spec.authors = ["OctaSpace Team"]
   spec.email = ["dev@octa.space"]
 
-  spec.summary = "Ruby SDK for the OctaSpace API"
-  spec.description = "Official Ruby client for OctaSpace. " \
-                     "Keep-alive connections, URL failover, retry with backoff, Rails integration."
+  spec.summary = "Official Ruby library for the OctaSpace API"
+  spec.description = "Rent compute machines and render nodes, manage sessions and the nodes " \
+                     "you host, and read GPU market statistics on OctaSpace from Ruby code."
   spec.homepage = "https://github.com/octaspace/ruby-sdk"
   spec.license = "MIT"
 
   spec.required_ruby_version = ">= 3.3.0"
 
   spec.metadata = {
-    "changelog_uri" => "#{spec.homepage}/blob/main/CHANGELOG.md",
+    "changelog_uri" => "#{spec.homepage}/blob/v#{spec.version}/CHANGELOG.md",
+    "documentation_uri" => "https://rubydoc.info/gems/octaspace/#{spec.version}",
     "source_code_uri" => spec.homepage,
     "bug_tracker_uri" => "#{spec.homepage}/issues",
     "rubygems_mfa_required" => "true"
   }
 
-  spec.files = Dir["lib/**/*.rb", "MIT-LICENSE", "README.md", "CHANGELOG.md"]
+  spec.files = Dir["lib/**/*.rb", "LICENSE", "README.md", "CHANGELOG.md"]
   spec.require_paths = ["lib"]
 
   spec.add_dependency "faraday", ">= 2.14.3", "< 3"

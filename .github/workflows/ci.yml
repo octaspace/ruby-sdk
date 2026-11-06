@@ -80,3 +80,4 @@ jobs:
       # Fails on any advisory for the resolved gems (fresh advisory database each run).
       - name: bundler-audit
         run: bundle exec bundle-audit check --update
+

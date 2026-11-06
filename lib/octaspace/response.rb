@@ -4,8 +4,7 @@ require "time"
 
 module OctaSpace
   # Rate limit state reported by the API in the +RateLimit-Limit+,
-  # +RateLimit-Remaining+ and +RateLimit-Reset+ headers (IETF draft format,
-  # no +X-+ prefix).
+  # +RateLimit-Remaining+ and +RateLimit-Reset+ headers.
   #
   # The API keeps separate windows (anonymous per IP, authenticated per
   # account, and a stricter one for starting and restarting services), so the

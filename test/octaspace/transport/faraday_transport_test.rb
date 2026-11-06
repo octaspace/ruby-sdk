@@ -33,10 +33,10 @@ class OctaSpace::FaradayTransportTest < Minitest::Test
 
   def test_post_sends_json_body
     stub_request(:post, "#{BASE}/services/compute")
-      .with(body: '{"node_number":"M95S-WZG8-7"}', headers: {"Content-Type" => "application/json"})
+      .with(body: '{"node_number":"7KQ4-M2XD-4"}', headers: {"Content-Type" => "application/json"})
       .to_return(status: 201, body: '{"uuid":"u"}', headers: JSON_HEADERS)
 
-    assert_equal "u", transport.post("/services/compute", body: {node_number: "M95S-WZG8-7"}).data["uuid"]
+    assert_equal "u", transport.post("/services/compute", body: {node_number: "7KQ4-M2XD-4"}).data["uuid"]
   end
 
   def test_empty_body_on_204_and_202
@@ -112,12 +112,12 @@ class OctaSpace::FaradayTransportTest < Minitest::Test
     assert_requested(:get, "#{BASE}/network") { |req| !req.headers.key?("Authorization") }
   end
 
-  def test_401_with_legacy_key_adds_hint
+  def test_401_with_non_octa_ak_key_adds_hint
     @config.api_key = "a" * 64
     stub_request(:get, "#{BASE}/accounts/balance").to_return(status: 401, body: '{"message":"Invalid bearer token"}')
 
     error = assert_raises(OctaSpace::AuthenticationError) { transport.get("/accounts/balance") }
-    assert_match(/\AInvalid bearer token \(the next API expects a key starting with "octa_ak_"/, error.message)
+    assert_match(/\AInvalid bearer token \(API keys start with "octa_ak_"/, error.message)
   end
 
   def test_401_with_new_key_has_no_hint

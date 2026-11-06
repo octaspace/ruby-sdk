@@ -4,7 +4,7 @@ require "test_helper"
 
 class OctaSpace::NetworkResourceTest < Minitest::Test
   def test_info_without_key
-    stub_get("/network", fixture_path: "next/network.json")
+    stub_get("/network", fixture_path: "network.json")
     info = OctaSpace::Client.new.network.info
 
     assert_equal 3, info.nodes.online
@@ -19,7 +19,7 @@ class OctaSpace::NetworkResourceTest < Minitest::Test
   end
 
   def test_info_never_sends_key
-    stub_get("/network", fixture_path: "next/network.json")
+    stub_get("/network", fixture_path: "network.json")
     test_client.network.info
     assert_requested(:get, "#{StubHelpers::BASE_URL}/network") { |req| !req.headers.key?("Authorization") }
   end

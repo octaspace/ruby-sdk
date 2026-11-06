@@ -6,17 +6,17 @@ module OctaSpace
     #
     # @example
     #   client.hosting.nodes.each { |node| puts "#{node.number} #{node.status}" }
-    #   client.hosting.set_prices("M95S-WZG8-7", base: OctaSpace::Money.from_usd("0.25"))
+    #   client.hosting.set_prices("7KQ4-M2XD-4", base: OctaSpace::Money.from_usd("0.25"))
     class Hosting < Base
       PRICE_FIELDS = %i[base storage traffic min_rent_minutes].freeze
 
-      # GPU fields nodes may send as strings in +system.gpus+
+      # Integer GPU fields of +system.gpus+, read as numbers
       HOSTING_GPU_FIELDS = (GPU_INTEGER_FIELDS + %w[mem_free_mb fan_speed gpu_temperature gpu_utilization power_draw_watt]).freeze
 
       # Online nodes of the account with their state, hardware and prices.
       # GET /hosting/nodes
       #
-      # Offline nodes are not listed, and there is no per-node endpoint.
+      # Offline nodes are not listed.
       # @return [Array<OctaSpace::Types::HostingNode>]
       def nodes
         data = JsonNull.null_strings!(Array(get("/hosting/nodes").data))
@@ -25,7 +25,7 @@ module OctaSpace
       end
 
       # Updates some prices of a node.
-      # PATCH /hosting/nodes/{number}/prices (→ 204)
+      # PATCH /hosting/nodes/{number}/prices
       #
       # Only the given fields are sent; at least one is required. Amounts are
       # integer micro-USD (convert dollars with {OctaSpace::Money.from_usd}).
@@ -34,8 +34,8 @@ module OctaSpace
       # {OctaSpace::ValidationError}, and an unknown node with
       # {OctaSpace::NotFoundError}.
       #
-      # 204 means the prices are stored; listings (+hosting.nodes+,
-      # +compute.list+) show them after replication, usually within seconds.
+      # The listings (+hosting.nodes+, +compute.list+) show new prices within
+      # seconds.
       #
       # @param number [String] node number; case and dashes are ignored
       # @param base [Integer, nil]

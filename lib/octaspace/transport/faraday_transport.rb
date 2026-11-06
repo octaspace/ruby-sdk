@@ -8,7 +8,7 @@ module OctaSpace
     # Standard HTTP transport built on Faraday
     #
     # - +Authorization: Bearer <api_key>+ per endpoint auth mode
-    # - JSON request encoding and response parsing (empty 202/204 bodies are fine)
+    # - JSON request encoding and response parsing
     # - Retries with exponential backoff and jitter for GET and idempotent
     #   requests only, honouring Retry-After up to {Configuration#max_retry_after}
     # - Failover across several base URLs for GET requests on network errors;
@@ -156,7 +156,7 @@ module OctaSpace
           elsif auth == :required
             raise AuthenticationError,
               "api_key is required for #{method.upcase} #{path}: pass an API key " \
-              "(#{API_KEY_PREFIX}…) issued in Cube → Profile → Credentials"
+              "(#{API_KEY_PREFIX}…) from Account → Credentials → API Keys in the OctaSpace dashboard"
           end
         end
         headers

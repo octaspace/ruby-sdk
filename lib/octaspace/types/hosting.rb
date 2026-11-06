@@ -63,7 +63,7 @@ module OctaSpace
     # An online node of the account (+GET /hosting/nodes+)
     class HostingNode < Model
       # @!attribute [r] number
-      #   @return [String] node number, e.g. "M95S-WZG8-7" (the one renters see)
+      #   @return [String] node number, e.g. "7KQ4-M2XD-4" (the one renters see)
       # @!attribute [r] status
       #   @return [String] "idle", "rented", "verification", "benchmark" or "unknown"
       # @!attribute [r] verified

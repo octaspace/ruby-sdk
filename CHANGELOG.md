@@ -1,50 +1,103 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to this project are documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+The SDK follows the current OctaSpace API. Most resources changed; see the
+[resources](docs/resources.md) and [sessions](docs/sessions.md) guides.
+
+### Added
+
+- `client.compute`: `list`, `start`, `start_batch` and `restart`.
+- `client.render`: `list`, `start` and `start_batch`.
+- `client.sessions`: `get`, `logs`, `stop`, `wait_ready` and `wait_stopped`.
+- `client.hosting`: `nodes` and `set_prices`.
+- `client.stats`: `gpu_current`, `gpu_history` and `gpu_locations`.
+- Read-only response models under `OctaSpace::Types`, with `[]`, `to_h` and
+  pattern matching.
+- `OctaSpace::Money` for amounts in micro-USD.
+- `ConflictError` (HTTP 409), `SessionStoppedError` and `WaitTimeoutError`.
+- `retry_after`, `rate_limit` and `body` on `ApiError`, and `client.rate_limit`.
+- The `max_retry_after` and `max_retry_interval` options.
+- `OctaSpace::DEFAULT_BASE_URL` constant.
+- Guides under `docs/`.
+
+### Changed
+
+- **Breaking:** the API key is sent as `Authorization: Bearer <key>`. A key
+  that already has the `Bearer ` prefix is accepted.
+- **Breaking:** the default base URL is `https://api-dev.octa.space`
+  (`DEFAULT_BASE_URL`).
+- **Breaking:** nodes are identified by their node number, for example
+  `7KQ4-M2XD-4`.
+- **Breaking:** prices, charges and the balance are integer micro-USD.
+- **Breaking:** resource methods return models, session UUIDs or `nil` instead
+  of `OctaSpace::Response`.
+- **Breaking:** `sessions.list` takes no parameters and returns running
+  sessions only.
+- **Breaking:** HTTP 400 raises `ValidationError`, and the error message is the
+  API's message.
+- **Breaking:** only GET requests and `sessions.stop` are retried; starting and
+  restarting sessions are never retried. A `Retry-After` longer than 60 seconds
+  raises the error at once.
+- **Breaking:** a method that needs an API key raises `AuthenticationError`
+  before sending a request when none is configured.
+- **Breaking:** `on_request` no longer receives the request headers. The log
+  never contains headers or bodies.
+- **Breaking:** requires Ruby 3.3 or later and Faraday 2.14.3 or later;
+  `faraday-retry` is no longer a dependency.
+
+### Removed
+
+- **Breaking:** `client.nodes`, `client.apps`, `client.idle_jobs`,
+  `client.services`, `accounts.profile` and `accounts.generate_wallet`, with
+  their types. Hosted nodes and their prices are in `client.hosting`, sessions
+  in `client.sessions`.
+- **Breaking:** `ProvisionRejectedError`, `PayloadHelpers`,
+  `Transport::MockTransport`, the `OctaSpace::Engine` playground and the
+  `persistent` configuration alias of `keep_alive`.
 
 ## [0.2.0] - 2026-04-16
 
 ### Added
 
-- Support for `client.services.session(uuid).logs(recent: true)` for finished-session log retrieval.
-- `OctaSpace::ProvisionRejectedError` for MR create requests that are transport-successful but rejected by the API payload contract.
-- `OctaSpace::PayloadHelpers` with targeted helpers for stringified app port lists and marketplace bandwidth normalization.
-- Diagnostics preset and manual runner support for recent session logs.
-- Live-shaped fixtures for recent sessions and render marketplace responses.
+- `client.services.session(uuid).logs(recent: true)` for the logs of a finished
+  session.
+- `OctaSpace::ProvisionRejectedError` for machine rental requests that the API
+  accepts but rejects in the response body.
+- `OctaSpace::PayloadHelpers` for app port lists sent as strings and for
+  marketplace bandwidth values.
 
 ### Changed
 
-- `services.mr.list`, `services.render.list`, and `services.vpn.list` are now documented and tested as marketplace catalog endpoints rather than session collections.
-- `services.mr.create` now forwards optional `organization_id` and `project_id`.
-- Playground Services now presents marketplace-oriented summaries with normalized bandwidth display.
-- Playground and README copy now reflect live API quirks for app ports, recent sessions, and finished-session logs.
-- Publishing guidance now uses an explicit manual release flow, and the local `rake release` helper is disabled to avoid accidental RubyGems publication.
+- `services.mr.list`, `services.render.list` and `services.vpn.list` return
+  the marketplace catalog, not sessions.
+- `services.mr.create` passes the optional `organization_id` and `project_id`.
 
 ### Fixed
 
-- Corrected the Ruby public API gap for recent finished-session logs.
-- Corrected MR create handling for `HTTP 200` batch-style rejection responses.
-- Corrected fixtures and tests that modeled `/services/mr` and `/services/vpn` as session lists.
-- Corrected logs fixtures and tests to match the live `{system, container}` payload shape.
-- Corrected the playground Apps page so port counts work when the live API returns stringified JSON arrays.
-- Corrected test coverage for `sessions?recent=true` by using live-shaped string telemetry fields.
+- `services.mr.create` raises `ProvisionRejectedError` for a rejection returned
+  with HTTP 200.
 
 ## [0.1.0] - 2026-04-12
 
+First release.
+
 ### Added
 
-- Initial release of the official OctaSpace Ruby SDK.
-- Support for core resources: Accounts, Nodes, Sessions, Apps, Network, and Idle Jobs.
-- Resource-oriented client: `client.nodes.list`, `client.services.session(uuid).stop`.
-- Persistent HTTP connections (keep-alive mode) via `ConnectionPool`.
-- Automatic URL rotation and failover for high availability.
-- Retry with exponential backoff and jitter for transient errors.
-- Typed error hierarchy based on HTTP status codes.
-- Rails integration with automatic client sharing and graceful shutdown.
-- Interactive Playground app for manual testing and diagnostics.
+- `OctaSpace::Client` and `OctaSpace.configure`, with accounts, nodes,
+  sessions, apps, network, idle jobs and services resources.
+- Persistent HTTP connections with a connection pool (`keep_alive`).
+- Failover between several base URLs.
+- Retries with exponential backoff and jitter for transient errors.
+- Typed errors mapped from HTTP status codes.
+- Rails integration: a shared client that is shut down when the process exits.
+- A playground Rails engine for trying the API.
 
-[0.2.0]: https://github.com/octaspace/ruby-sdk/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/octaspace/ruby-sdk/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/octaspace/ruby-sdk/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/octaspace/ruby-sdk/releases/tag/v0.1.0
