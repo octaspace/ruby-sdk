@@ -2,55 +2,81 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, next]
+  # Every pull request, including stacked ones whose base is another feature branch.
   pull_request:
   workflow_call:
 
+# Least privilege: jobs only read the repository.
+permissions:
+  contents: read
+
+# A new push to the same PR or branch cancels the run still in progress.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+# Actions are pinned to full commit SHAs (tag in the comment); Dependabot keeps them current.
 jobs:
-  lint:
-    name: Lint (StandardRB)
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: "3.4"
-          bundler-cache: true
-
-      - name: StandardRB
-        run: bundle exec standardrb
-
   test:
-    name: Ruby ${{ matrix.ruby }} / ${{ matrix.gemfile }}
+    name: Test (Ruby ${{ matrix.ruby }})
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
-        ruby:
-          - "3.2"
-          - "3.3"
-          - "3.4"
-        gemfile:
-          - gemfiles/rails_7_1.gemfile
-          - gemfiles/rails_7_2.gemfile
-          - gemfiles/rails_8_0.gemfile
-
-    env:
-      BUNDLE_GEMFILE: ${{ github.workspace }}/${{ matrix.gemfile }}
-      BUNDLE_PATH_RELATIVE_TO_CWD: true
+        # Ruby lines still maintained upstream; 3.3 is the minimum in the gemspec.
+        ruby: ["3.3", "3.4", "4.0"]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - uses: ruby/setup-ruby@v1
+      - uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1.336.0
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
 
       - name: Test
         run: bundle exec rake test
+
+      - name: Build gem
+        run: gem build octaspace.gemspec --strict
+
+  lint:
+    name: Lint (StandardRB)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1.336.0
+        with:
+          ruby-version: "4.0"
+          bundler-cache: true
+
+      - name: StandardRB
+        run: bundle exec standardrb
+
+  security:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ruby/setup-ruby@de492cf36cbab201753d720ce4f4e336cd688c94 # v1.336.0
+        with:
+          ruby-version: "4.0"
+          bundler-cache: true
+
+      # Fails on any advisory for the resolved gems (fresh advisory database each run).
+      - name: bundler-audit
+        run: bundle exec bundle-audit check --update

@@ -15,8 +15,7 @@ Official Ruby SDK for the [OctaSpace API](https://api.octa.space/api-docs).
 - **Typed error hierarchy** — 12 exception classes mapped from HTTP status codes
 - **`on_request` / `on_response` hooks** — for logging, tracing, APM
 - **Rails integration** — Railtie, shared client, graceful shutdown at_exit
-- **Playground app** — `bin/playground` with live diagnostics page
-- **Ruby ≥ 3.2**, Rails 7.1 / 7.2 / 8.0
+- **Ruby ≥ 3.3**; optional Railtie for Rails apps
 
 ## Installation
 
@@ -258,25 +257,6 @@ node.id        # => 123
 
 Available types: `Node`, `Account`, `Balance`, `Session`.
 
-## Playground App
-
-Interactive demo for manual testing against a real API key:
-
-```bash
-OCTA_API_KEY=your_key bin/playground
-# → http://localhost:3000
-```
-
-Pages:
-
-| Route | Content |
-|---|---|
-| `/playground/account` | Profile + balance |
-| `/playground/nodes` | Node list with state badges |
-| `/playground/sessions` | Current + recent sessions, including live-format quirks |
-| `/playground/services` | Marketplace catalogs for MR, Render, and VPN |
-| `/playground/diagnostics` | Direct SDK method runner for contracts, payloads, transport mode, and pool stats |
-
 ## Development
 
 ### Gem Development
@@ -303,33 +283,6 @@ irb
 > client_auth = OctaSpace::Client.new(api_key: "token")  # Test authenticated client
 > client_auth.accounts.profile.data # Retrieving profile data (email, ID, etc.)
 ```
-
-### Running tests against multiple Rails versions
-
-```bash
-bundle exec appraisal rails-7-1 rake test
-bundle exec appraisal rails-7-2 rake test
-bundle exec appraisal rails-8-0 rake test
-```
-
-### Dummy Application (Playground)
-
-The repository includes a Rails "Dummy" application for manual testing and UI prototyping. It is located in `test/dummy`.
-
-To run the dummy app:
-
-1. Ensure you have an API key: `export OCTA_API_KEY=your_key`
-2. Run the playground script: `bin/playground` (starts Puma on port 3000)
-3. Visit `http://localhost:3000/playground/diagnostics`
-
-You can also run it manually from the directory:
-
-```bash
-cd test/dummy
-bin/rails server
-```
-
-The dummy app is configured to use the local version of the gem. It is **not** included in the published gem package.
 
 ## Packaging and Publishing
 
