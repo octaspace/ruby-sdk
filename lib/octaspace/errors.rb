@@ -28,6 +28,9 @@ module OctaSpace
   class ConnectionError < NetworkError; end
   class TimeoutError < NetworkError; end
 
+  # Raised by sessions.wait_ready / wait_stopped when the timeout runs out
+  class WaitTimeoutError < TimeoutError; end
+
   # An HTTP 4xx/5xx response from the API, or a 2xx response the SDK could not
   # read. The next API answers errors as +{"message": "..."}+; the message is
   # used as the exception message.
@@ -64,6 +67,11 @@ module OctaSpace
   # 404: the resource does not exist. For a session this also means it has
   # stopped: the API only reports running sessions.
   class NotFoundError < ApiError; end
+
+  # Raised by sessions.wait_ready when the session disappears (404) while it
+  # is waited for: it stopped, for example because its SSH setup failed. A
+  # stopped session's logs are no longer available.
+  class SessionStoppedError < NotFoundError; end
 
   # 409: the operation conflicts with the current state, e.g. restarting a
   # session that is still starting or restarting.
