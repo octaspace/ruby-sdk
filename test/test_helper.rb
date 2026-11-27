@@ -3,10 +3,7 @@
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
 require "octaspace"
-require "octaspace/transport/mock_transport"
-require "octaspace/playground/payload_presets"
 require "minitest/autorun"
-require "minitest/mock"
 require "webmock/minitest"
 
 require_relative "support/fixture_helpers"
@@ -17,6 +14,10 @@ Minitest.backtrace_filter = Minitest::BacktraceFilter.new
 
 # Disable all real HTTP connections in tests
 WebMock.disable_net_connect!
+
+# Tests configure the key and host themselves
+ENV.delete("OCTA_API_KEY")
+ENV.delete("OCTA_API_URL")
 
 module Minitest
   class Test

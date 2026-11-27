@@ -2,31 +2,19 @@
 
 module OctaSpace
   module Resources
-    # Account-related API endpoints
+    # The account the API key belongs to
     #
     # @example
-    #   client.accounts.profile
-    #   client.accounts.balance
+    #   client.accounts.balance.formatted # => "$12.500000"
     class Accounts < Base
-      # Fetch the authenticated user's profile
-      # GET /accounts
-      # @return [OctaSpace::Response]
-      def profile
-        get("/accounts")
-      end
-
-      # Fetch the authenticated user's balance
+      # Account balance.
       # GET /accounts/balance
-      # @return [OctaSpace::Response]
+      #
+      # Also a simple way to check that an API key works. A recent charge or
+      # deposit can take a moment to appear.
+      # @return [OctaSpace::Types::Balance]
       def balance
-        get("/accounts/balance")
-      end
-
-      # Generate / create a new wallet for the authenticated user
-      # POST /accounts
-      # @return [OctaSpace::Response]
-      def generate_wallet
-        post("/accounts")
+        Types::Balance.new(get("/accounts/balance").data)
       end
     end
   end

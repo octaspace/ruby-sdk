@@ -14,8 +14,7 @@ module OctaSpace
   #   end
   class Railtie < ::Rails::Railtie
     initializer "octaspace.configure" do
-      # No-op: users call OctaSpace.configure {} directly in their initializer.
-      # This hook exists for future extensions (e.g., auto-configure from credentials).
+      # Configure the SDK with OctaSpace.configure in your own initializer.
     end
 
     # Gracefully shut down the shared client's persistent connection pools

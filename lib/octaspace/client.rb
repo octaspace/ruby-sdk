@@ -8,7 +8,7 @@ module OctaSpace
   #
   # @example Standard mode (default)
   #   client = OctaSpace::Client.new(api_key: ENV["OCTA_API_KEY"])
-  #   client.nodes.list
+  #   client.compute.list
   #   client.accounts.balance
   #
   # @example Keep-alive mode (persistent connections + pool)
@@ -18,14 +18,14 @@ module OctaSpace
   #     pool_size:  ENV.fetch("RAILS_MAX_THREADS", 5).to_i
   #   )
   #
-  # @example Multiple API endpoints with failover
+  # @example Several API hosts with failover (the second one is your own, e.g. a proxy)
   #   client = OctaSpace::Client.new(
   #     api_key:   ENV["OCTA_API_KEY"],
-  #     base_urls: ["https://api.octa.space", "https://api2.octa.space"]
+  #     base_urls: [OctaSpace::DEFAULT_BASE_URL, "https://octaspace-proxy.your-company.example"]
   #   )
   #
-  # @example Without API key (public endpoints only)
-  #   client = OctaSpace::Client.new
+  # @example Without an API key (network and GPU statistics, listings, apps)
+  #   client = OctaSpace::Client.new(api_key: "")
   #   client.network.info
   #
   # @example With hooks
@@ -35,22 +35,40 @@ module OctaSpace
   #     on_response: ->(resp) { puts "← #{resp.status}" }
   #   )
   class Client
-    attr_reader :accounts, :nodes, :sessions, :apps,
-      :network, :services, :idle_jobs
+    # @return [Resources::Accounts] balance
+    attr_reader :accounts
+    # @return [Resources::Compute] machines for rent: list, apps, start, start_batch, restart
+    attr_reader :compute
+    # @return [Resources::Hosting] nodes of the account: state, prices, maintenance
+    attr_reader :hosting
+    # @return [Resources::Network] platform statistics; no API key needed
+    attr_reader :network
+    # @return [Resources::Render] render nodes: list, start, start_batch
+    attr_reader :render
+    # @return [Resources::Sessions] running sessions: list, get, logs, stop, wait_ready, wait_stopped
+    attr_reader :sessions
+    # @return [Resources::Stats] GPU market and mining statistics; no API key needed
+    attr_reader :stats
+    # @return [Resources::Vpn] VPN nodes: list, start
+    attr_reader :vpn
 
-    # @param api_key [String, nil] API key for authentication (optional for public endpoints)
+    # @param api_key [String, nil] API key of your OctaSpace account (+octa_ak_…+);
+    #   defaults to the global configuration, which reads +OCTA_API_KEY+. Pass ""
+    #   for a client without a key. See the README for the calls that work
+    #   without one.
     # @param opts [Hash] Per-instance configuration overrides.
     #   Any attribute from OctaSpace::Configuration can be passed here.
     def initialize(api_key: nil, transport: nil, **opts)
       @config = build_config(api_key, opts)
       @transport = transport || build_transport
       @accounts = Resources::Accounts.new(@transport)
-      @nodes = Resources::Nodes.new(@transport)
-      @sessions = Resources::Sessions.new(@transport)
-      @apps = Resources::Apps.new(@transport)
+      @compute = Resources::Compute.new(@transport)
+      @hosting = Resources::Hosting.new(@transport)
       @network = Resources::Network.new(@transport)
-      @services = Resources::Services.new(@transport)
-      @idle_jobs = Resources::IdleJobs.new(@transport)
+      @render = Resources::Render.new(@transport)
+      @sessions = Resources::Sessions.new(@transport)
+      @stats = Resources::Stats.new(@transport)
+      @vpn = Resources::Vpn.new(@transport)
     end
 
     # Shut down persistent connections (only relevant in keep_alive mode)
@@ -61,15 +79,14 @@ module OctaSpace
     # Transport diagnostics (pool stats when in keep_alive mode)
     # @return [Hash]
     def transport_stats
-      if @transport.respond_to?(:transport_stats)
-        @transport.transport_stats
-      elsif @transport.respond_to?(:pool_stats)
-        {mode: :persistent, pools: @transport.pool_stats}
-      elsif @config.urls.size > 1
-        {mode: :standard, rotator: @transport.instance_variable_get(:@rotator)&.stats}
-      else
-        {mode: :standard, url: @config.urls.first}
-      end
+      @transport.respond_to?(:transport_stats) ? @transport.transport_stats : {mode: :custom}
+    end
+
+    # Rate limit state (RateLimit-* headers) of the most recent response that
+    # carried them, or nil before the first such response.
+    # @return [OctaSpace::RateLimit, nil]
+    def rate_limit
+      @transport.respond_to?(:rate_limit) ? @transport.rate_limit : nil
     end
 
     private
@@ -77,7 +94,7 @@ module OctaSpace
     # Merge global config with per-instance overrides
     def build_config(api_key, overrides)
       cfg = OctaSpace.configuration.dup
-      cfg.api_key = api_key
+      cfg.api_key = api_key unless api_key.nil?
       overrides.each do |key, value|
         cfg.public_send(:"#{key}=", value) if cfg.respond_to?(:"#{key}=")
       end

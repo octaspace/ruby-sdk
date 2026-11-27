@@ -1,33 +1,35 @@
 # frozen_string_literal: true
 
 require "octaspace/version"
-require "octaspace/errors"
-require "octaspace/payload_helpers"
-require "octaspace/response"
 require "octaspace/configuration"
+require "octaspace/errors"
+require "octaspace/response"
+require "octaspace/json_null"
+require "octaspace/money"
+require "octaspace/model"
 require "octaspace/middleware/url_rotator"
 require "octaspace/transport/base"
 require "octaspace/transport/faraday_transport"
-require "octaspace/types/account"
-require "octaspace/types/balance"
-require "octaspace/types/node"
+require "octaspace/types/machines"
 require "octaspace/types/session"
+require "octaspace/types/account"
+require "octaspace/types/network"
+require "octaspace/types/hosting"
+require "octaspace/types/stats"
 require "octaspace/resources/base"
 require "octaspace/resources/accounts"
-require "octaspace/resources/nodes"
-require "octaspace/resources/sessions"
-require "octaspace/resources/apps"
 require "octaspace/resources/network"
-require "octaspace/resources/services"
-require "octaspace/resources/idle_jobs"
+require "octaspace/resources/stats"
+require "octaspace/resources/compute"
+require "octaspace/resources/render"
+require "octaspace/resources/sessions"
+require "octaspace/resources/hosting"
+require "octaspace/resources/vpn"
 require "octaspace/client"
 
-# OctaSpace Ruby SDK
-#
-# Official Ruby client for the OctaSpace API.
-# Supports standard and keep-alive (persistent) connection modes,
-# automatic URL rotation/failover, retry with exponential backoff,
-# and optional Rails integration.
+# The official Ruby library for the OctaSpace API: rent compute machines,
+# render nodes and VPN, manage sessions and the nodes you host, and read
+# platform, GPU market and mining statistics.
 #
 # @example Quick start
 #   OctaSpace.configure do |config|
@@ -35,10 +37,10 @@ require "octaspace/client"
 #   end
 #
 #   client = OctaSpace.client
-#   client.nodes.list
+#   client.compute.list
 #   client.accounts.balance
 #
-# @see https://api.octa.space/api-docs
+# @see https://github.com/octaspace/ruby-sdk#readme Guides
 module OctaSpace
   class << self
     # Global configuration object
@@ -60,7 +62,7 @@ module OctaSpace
       yield configuration
     end
 
-    # Reset global configuration to defaults (useful in tests)
+    # Resets the global configuration to its defaults and drops the shared client.
     def reset_configuration!
       @configuration = Configuration.new
       @shared_client = nil

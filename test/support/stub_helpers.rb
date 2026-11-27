@@ -3,7 +3,7 @@
 require "webmock/minitest"
 
 module StubHelpers
-  BASE_URL = "https://api.octa.space"
+  BASE_URL = OctaSpace::DEFAULT_BASE_URL
 
   # Stub a successful GET request
   # @param path [String] API path (e.g. "/nodes")
