@@ -254,6 +254,36 @@ class OctaSpace::FaradayTransportTest < Minitest::Test
     assert_requested :post, "#{BASE}/services/compute/u/restart", times: 1
   end
 
+  def test_put_and_delete_are_retried
+    @config.max_retries = 1
+    url = "#{BASE}/hosting/nodes/A/maintenance"
+    stub_request(:put, url).to_return({status: 503, body: ""}, {status: 204, body: ""})
+    stub_request(:delete, url).to_raise(Faraday::ConnectionFailed.new("reset")).then.to_return(status: 204, body: "")
+
+    assert_equal 204, transport.put("/hosting/nodes/A/maintenance").status
+    assert_equal 204, transport.delete("/hosting/nodes/A/maintenance").status
+    assert_requested :put, url, times: 2
+    assert_requested :delete, url, times: 2
+  end
+
+  def test_patch_is_never_retried
+    @config.max_retries = 2
+    stub_request(:patch, "#{BASE}/hosting/nodes/A/prices").to_return(status: 503, body: "{}")
+
+    assert_raises(OctaSpace::ServiceUnavailableError) { transport.patch("/hosting/nodes/A/prices", body: {base: 100}) }
+    assert_requested :patch, "#{BASE}/hosting/nodes/A/prices", times: 1
+  end
+
+  def test_sends_app_header_on_every_request
+    stub_request(:get, "#{BASE}/network").to_return(status: 200, body: "{}")
+    stub_request(:post, "#{BASE}/services/u/stop").to_return(status: 202, body: "{}")
+    transport.get("/network", auth: :none)
+    transport.post("/services/u/stop")
+
+    assert_requested :get, "#{BASE}/network", headers: {"X-OCTA-APP" => "ruby-sdk"}
+    assert_requested :post, "#{BASE}/services/u/stop", headers: {"X-OCTA-APP" => "ruby-sdk"}
+  end
+
   def test_idempotent_post_is_retried
     @config.max_retries = 1
     stub_request(:post, "#{BASE}/services/u/stop")

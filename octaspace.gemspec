@@ -9,8 +9,9 @@ Gem::Specification.new do |spec|
   spec.email = ["dev@octa.space"]
 
   spec.summary = "Official Ruby library for the OctaSpace API"
-  spec.description = "Rent compute machines and render nodes, manage sessions and the nodes " \
-                     "you host, and read GPU market statistics on OctaSpace from Ruby code."
+  spec.description = "Rent compute machines, render nodes and VPN, manage sessions and the " \
+                     "nodes you host, and read platform, GPU market and mining statistics " \
+                     "on OctaSpace from Ruby code."
   spec.homepage = "https://github.com/octaspace/ruby-sdk"
   spec.license = "MIT"
 

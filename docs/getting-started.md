@@ -43,7 +43,7 @@ client only.
 
 | Option | Default | Effect |
 | --- | --- | --- |
-| `api_key` | `nil` | Your API key; without it only the [calls without a key](../README.md#calls-without-an-api-key) work |
+| `api_key` | `OCTA_API_KEY` | Your API key; without it only the [calls without a key](../README.md#calls-without-an-api-key) work |
 | `open_timeout` | `10` | Seconds to wait for a connection |
 | `read_timeout` | `30` | Seconds to wait for a response |
 | `write_timeout` | `30` | Seconds to wait while sending a request |
@@ -56,8 +56,8 @@ client only.
 | `keep_alive` | `false` | Persistent connections, see [below](#keep-alive-connections) |
 | `pool_size` / `pool_timeout` / `idle_timeout` | `5` / `5` / `60` | Connection pool of `keep_alive` |
 | `ssl_verify` | `true` | Verify the server's TLS certificate |
-| `base_url` | `OctaSpace::DEFAULT_BASE_URL` | Another API host |
-| `base_urls` | `nil` | Several API hosts, see [below](#several-hosts) |
+| `base_url` | `OCTA_API_URL`, otherwise `OctaSpace::DEFAULT_BASE_URL` | Another API host |
+| `base_urls` | `nil` | Several API hosts, see [below](#several-hosts); `OCTA_API_URL` with URLs separated by commas sets them |
 
 ## Timeouts
 
@@ -134,5 +134,5 @@ of your own. Requests are spread over the hosts in turn. A GET request moves to
 the next host only when the current one cannot be reached (DNS, connection or
 TLS failure, timeout); an HTTP error response, including 5xx, is raised as it
 is. A request that changes something (starting, restarting or stopping a
-session, setting prices) is sent to one host only, so that it cannot run
+session, setting prices or maintenance) is sent to one host only, so that it cannot run
 twice.

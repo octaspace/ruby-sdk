@@ -64,4 +64,36 @@ class OctaSpace::StatsResourceTest < Minitest::Test
     assert_equal "Arc B580", loc.model
     assert_equal 2, loc.gpus
   end
+
+  def test_gpu_current_memory_mb
+    stub_request(:get, "#{BASE}/stats/gpu/current").to_return(status: 200, body: fixture("stats_gpu_current.json"))
+    gpus = @client.stats.gpu_current.gpus
+
+    assert_equal 24_576, gpus.first.memory_mb
+    assert(gpus.any? { |gpu| gpu.memory_mb.nil? })
+  end
+
+  def test_mining
+    stub_request(:get, "#{BASE}/stats/mining").with(query: {"role" => "gpu", "days" => "30"})
+      .to_return(status: 200, body: fixture("stats_mining.json"))
+    usage = @client.stats.mining(role: :gpu, days: 30)
+
+    assert_instance_of OctaSpace::Types::MiningUsage, usage
+    assert_equal "gpu_hours", usage.measure
+    assert_equal "2026-10-21", usage.from
+    assert_equal 8, usage.total.started
+    miner = usage.miners.first
+    assert_equal "other", miner.name
+    assert_nil miner.label
+    assert_equal [], usage.pools.first.coins
+    assert_equal usage.daily.dates.size, usage.daily.miners.fetch("other").size
+    assert_kind_of Time, usage.time
+    assert_requested(:get, %r{/stats/mining}) { |req| !req.headers.key?("Authorization") }
+  end
+
+  def test_mining_days_out_of_range
+    stub_request(:get, "#{BASE}/stats/mining").with(query: {"days" => "0"})
+      .to_return(status: 400, body: '{"message":"days must be 1..365"}')
+    assert_raises(OctaSpace::ValidationError) { @client.stats.mining(days: 0) }
+  end
 end

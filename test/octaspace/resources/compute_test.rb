@@ -168,4 +168,67 @@ class OctaSpace::ComputeResourceTest < Minitest::Test
     error = assert_raises(OctaSpace::RateLimitError) { @client.compute.restart(UUID) }
     assert_equal 288, error.retry_after
   end
+
+  # --- list: node details ---
+
+  def test_list_node_details
+    stub_get("/services/compute", fixture_path: "services_compute.json")
+    machines = @client.compute.list
+    wsl = machines.find(&:wsl?)
+
+    assert_equal "WSL - Ubuntu 24.04", wsl.os_version
+    assert_equal "wsl", wsl.virt
+    refute wsl.hive_os?
+    refute wsl.gpu_passthrough?
+    bare = machines.find { |m| m.virt == "none" }
+    assert_equal "Ubuntu 24.04", bare.os_version
+    refute bare.wsl?
+  end
+
+  # --- apps ---
+
+  def test_apps
+    stub_get("/compute/apps", fixture_path: "compute_apps.json")
+    apps = @client.compute.apps
+
+    ubuntu = apps.first
+    assert_instance_of OctaSpace::Types::ComputeApp, ubuntu
+    assert_equal "ubuntu:24.04", ubuntu.image
+    assert_equal 5, ubuntu.min_disk_size
+    refute ubuntu.personal?
+    assert_nil ubuntu.startup_script
+    assert apps[1].personal?
+    assert_equal({}, apps[1].envs)
+    assert_requested(:get, "#{BASE}/compute/apps", headers: {"Authorization" => "Bearer test_key_123"})
+  end
+
+  def test_apps_null_strings_only_in_category_and_description
+    stub_request(:get, "#{BASE}/compute/apps").to_return(status: 200,
+      body: '[{"uuid":"a","category":"null","description":"null","entrypoint":"null","startup_script":"null","envs":{"X":"null"}}]')
+    app = @client.compute.apps.first
+
+    assert_nil app.category
+    assert_nil app.description
+    assert_equal "null", app.entrypoint
+    assert_equal "null", app.startup_script
+    assert_equal({"X" => "null"}, app.envs)
+  end
+
+  def test_apps_work_without_api_key
+    stub_request(:get, "#{BASE}/compute/apps").to_return(status: 200, body: "[]")
+    assert_equal [], OctaSpace::Client.new.compute.apps
+    assert_requested(:get, "#{BASE}/compute/apps") { |req| !req.headers.key?("Authorization") }
+  end
+
+  def test_start_from_app_sends_app_and_image
+    stub_request(:post, "#{BASE}/services/compute")
+      .with(body: {node_number: "7KQ4-M2XD-4", image: "ubuntu:24.04", app: "406c0b3f", disk_size: 10})
+      .to_return(status: 201, body: %({"uuid":"#{UUID}"}))
+
+    assert_equal UUID, @client.compute.start(node_number: "7KQ4-M2XD-4", image: "ubuntu:24.04", app: "406c0b3f", disk_size: 10)
+  end
+
+  def test_restart_rejects_unknown_parameters
+    assert_raises(ArgumentError) { @client.compute.restart(UUID, disk: 10) }
+  end
 end

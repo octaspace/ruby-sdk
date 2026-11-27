@@ -5,8 +5,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 The official Ruby library for the [OctaSpace](https://octa.space) API. Rent
-compute machines and render nodes, manage sessions and the nodes you host, and
-read GPU market statistics from Ruby code.
+compute machines, render nodes and VPN, manage sessions and the nodes you host,
+and read platform, GPU market and mining statistics from Ruby code.
 
 **Contents:** [Installation](#installation) ·
 [Quick start](#quick-start) · [Authentication](#authentication) ·
@@ -56,19 +56,17 @@ Create one client and reuse it: it is safe to share between threads.
 The SDK authenticates with an **API key** of your OctaSpace account. You create
 and delete API keys in the OctaSpace dashboard:
 
-1. Sign in to the [OctaSpace dashboard](https://cube-dev.octa.space).
+1. Sign in to the [OctaSpace dashboard](https://console.octa.space).
 2. In the sidebar, open **Account → Credentials**.
-3. In the **API Keys** section, click **New key**.
+3. In the **API Keys** section, click **Add API Key**.
 4. Enter a **Label** that tells you where the key is used, for example
    `billing-service`, and click **Create key**.
-5. Copy the key. It starts with `octa_ak_`.
+5. Copy the key. It starts with `octa_ak_`. You can copy it again later from
+   the **API Keys** list.
 
-> [!IMPORTANT]
-> The key is shown in full only once, right after you create it. Copy it
-> before you close the dialog. If you lose it, delete it and create a new one.
-
-Pass the key to `OctaSpace::Client.new`. The SDK sends it in the
-`Authorization: Bearer <key>` header.
+Pass the key to `OctaSpace::Client.new`, or set the `OCTA_API_KEY` environment
+variable: a client created without `api_key:` reads it. The SDK sends the key in
+the `Authorization: Bearer <key>` header.
 
 ```ruby
 client = OctaSpace::Client.new(api_key: ENV["OCTA_API_KEY"])
@@ -87,14 +85,16 @@ limited; the counter next to **API Keys** shows how many you have.
 
 ### Calls without an API key
 
-These methods also work without an API key. Create the client without
-`api_key:` to use them anonymously:
+These methods also work without an API key. To call them without one, create
+the client with `api_key: ""` (or without `api_key:` when `OCTA_API_KEY` is not
+set):
 
 | Method | Without a key |
 | --- | --- |
-| `network.info` | Same result |
-| `stats.gpu_current`, `stats.gpu_history`, `stats.gpu_locations` | Same result |
-| `compute.list`, `render.list` | Refreshed about once an hour instead of every 10 seconds |
+| `network.info`, `network.history` | Same result |
+| `stats.gpu_current`, `stats.gpu_history`, `stats.gpu_locations`, `stats.mining` | Same result |
+| `compute.list`, `render.list`, `vpn.list` | Refreshed about once an hour instead of every 10 seconds |
+| `compute.apps` | Official apps only, without your own |
 
 Every other method requires an API key and raises
 `OctaSpace::AuthenticationError` without one, before any request is sent.
@@ -122,13 +122,14 @@ See [Errors, rate limits and retries](docs/errors-and-reliability.md).
 
 | Resource | Dashboard section | Operations | Guide |
 | --- | --- | --- | --- |
-| `client.compute` | Marketplace → Compute | List machines, start, batch start, restart | [Compute](docs/resources.md#compute) |
+| `client.compute` | Marketplace → Compute, Applications | List machines and apps, start, batch start, restart | [Compute](docs/resources.md#compute) |
+| `client.vpn` | Marketplace → VPN | List VPN nodes, start | [VPN](docs/resources.md#vpn) |
 | `client.render` | Render → Launch Nodes | List render nodes, start, batch start | [Render](docs/resources.md#render) |
 | `client.sessions` | Marketplace → Sessions, Render → Render Nodes | List, get, logs, stop, wait until ready or stopped | [Sessions](docs/sessions.md) |
-| `client.hosting` | Hosting → Nodes | Your nodes, set prices | [Hosting](docs/resources.md#hosting) |
+| `client.hosting` | Hosting → Nodes | Your nodes, one node, set prices, maintenance | [Hosting](docs/resources.md#hosting) |
 | `client.accounts` | Account → Billing | Balance | [Accounts](docs/resources.md#accounts) |
-| `client.network` | — | Platform statistics | [Network](docs/resources.md#network) |
-| `client.stats` | — | GPU market: current, history, locations | [Stats](docs/resources.md#stats) |
+| `client.network` | — | Platform statistics now and over time | [Network](docs/resources.md#network) |
+| `client.stats` | Marketplace → Mining | GPU market: current, history, locations; mining | [Stats](docs/resources.md#stats) |
 
 Every class and method is documented on
 [RubyDoc.info](https://rubydoc.info/gems/octaspace).
@@ -138,7 +139,7 @@ Every class and method is documented on
 | Guide | Covers |
 | --- | --- |
 | [Client configuration](docs/getting-started.md) | Options and defaults, timeouts, logging, Rails, keep-alive connections |
-| [Resources](docs/resources.md) | Compute, render, hosting, balance, network and GPU statistics |
+| [Resources](docs/resources.md) | Compute, VPN, render, hosting, balance, network, GPU and mining statistics |
 | [Sessions](docs/sessions.md) | Waiting until ready, connecting, logs, stopping |
 | [Errors, rate limits and retries](docs/errors-and-reliability.md) | Error classes, limits, automatic retries |
 | [Changelog](CHANGELOG.md) | Changes in each release |

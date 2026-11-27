@@ -15,7 +15,10 @@ module OctaSpace
       #   @return [Float] percent rented now
       # @!attribute [r] usage_30d
       #   @return [Float, nil] average percent rented over 30 days
-      attribute :model, :total, :available, :rented, :usage, :usage_30d, :ai_score, :tflops, :tflops_per_dollar
+      # @!attribute [r] memory_mb
+      #   @return [Integer, nil] memory of one GPU, MiB: the size most GPUs of
+      #     the model have
+      attribute :model, :total, :available, :rented, :usage, :usage_30d, :memory_mb, :ai_score, :tflops, :tflops_per_dollar
       attribute :available_price, :rented_price, model: PricePercentiles
     end
 
@@ -86,6 +89,55 @@ module OctaSpace
       # @!attribute [r] verified
       #   @return [Integer] of them on verified nodes
       attribute :city, :country, :latitude, :longitude, :model, :gpus, :rented, :verified
+    end
+
+    # One miner, algorithm or pool of {MiningUsage}
+    class MiningRow < Model
+      # @!attribute [r] name
+      #   @return [String] catalogue name, or "other"
+      # @!attribute [r] started
+      #   @return [Integer] sessions that started (or restarted) with it
+      # @!attribute [r] gpu_hours
+      #   @return [Float] hours times GPUs; 0 for the CPU role
+      # @!attribute [r] coins
+      #   @return [Array<String>, nil] pools only
+      attribute :name, :label, :started, :hours, :gpu_hours, :coins
+    end
+
+    # Totals of {MiningUsage}
+    class MiningTotal < Model
+      attribute :started, :hours, :gpu_hours
+    end
+
+    # Miners per day of {MiningUsage}
+    class MiningDaily < Model
+      # @!attribute [r] dates
+      #   @return [Array<String>] ISO dates
+      # @!attribute [r] miners
+      #   @return [Hash{String=>Array<Float>}] one value of {MiningUsage#measure}
+      #     per date, by miner name
+      attribute :dates, :miners
+    end
+
+    # What the platform's mining sessions run (+GET /stats/mining+), most used first
+    class MiningUsage < Model
+      # @!attribute [r] role
+      #   @return [String] "gpu" or "cpu"
+      # @!attribute [r] from
+      #   @return [String] first day, ISO date
+      # @!attribute [r] to
+      #   @return [String] last day, ISO date
+      # @!attribute [r] measure
+      #   @return [String] "gpu_hours" or "hours"
+      # @!attribute [r] at
+      #   @return [Integer, nil] snapshot time, Unix seconds
+      attribute :role, :days, :from, :to, :measure, :at
+      attribute :total, model: MiningTotal
+      attribute :miners, :algorithms, :pools, model: MiningRow, many: true
+      attribute :daily, model: MiningDaily
+
+      # @return [Time, nil]
+      def time = at.is_a?(Numeric) ? Time.at(at) : nil
     end
   end
 end

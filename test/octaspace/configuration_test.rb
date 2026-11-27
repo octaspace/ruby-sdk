@@ -5,13 +5,39 @@ require "test_helper"
 class OctaSpace::ConfigurationTest < Minitest::Test
   def test_defaults
     config = OctaSpace::Configuration.new
-    assert_equal "https://api-dev.octa.space", config.base_url
+    assert_equal "https://api.octa.space", config.base_url
     assert_equal 10, config.open_timeout
     assert_equal 30, config.read_timeout
     assert_equal false, config.keep_alive
     assert_equal 5, config.pool_size
     assert_equal 2, config.max_retries
     assert_equal true, config.ssl_verify
+  end
+
+  def test_reads_key_and_url_from_env
+    with_env("OCTA_API_KEY" => " octa_ak_fromenv ", "OCTA_API_URL" => "https://a.example/") do
+      config = OctaSpace::Configuration.new
+      assert_equal "octa_ak_fromenv", config.api_key
+      assert_equal ["https://a.example"], config.urls
+    end
+  end
+
+  def test_env_url_list_sets_base_urls
+    with_env("OCTA_API_URL" => "https://a.example, https://b.example") do
+      assert_equal ["https://a.example", "https://b.example"], OctaSpace::Configuration.new.urls
+    end
+  end
+
+  def test_client_uses_env_key_unless_given_one
+    with_env("OCTA_API_KEY" => "octa_ak_fromenv") do
+      OctaSpace.reset_configuration!
+      stub_request(:get, "#{StubHelpers::BASE_URL}/accounts/balance").to_return(status: 200, body: "{}")
+      OctaSpace::Client.new.accounts.balance
+      assert_requested(:get, "#{StubHelpers::BASE_URL}/accounts/balance",
+        headers: {"Authorization" => "Bearer octa_ak_fromenv"})
+
+      assert_raises(OctaSpace::AuthenticationError) { OctaSpace::Client.new(api_key: "").accounts.balance }
+    end
   end
 
   def test_keep_alive_predicate
@@ -71,5 +97,15 @@ class OctaSpace::ConfigurationTest < Minitest::Test
     end
     assert_equal "my_key", OctaSpace.configuration.api_key
     assert OctaSpace.configuration.keep_alive?
+  end
+
+  private
+
+  def with_env(vars)
+    saved = vars.keys.to_h { |key| [key, ENV[key]] }
+    vars.each { |key, value| ENV[key] = value }
+    yield
+  ensure
+    saved.each { |key, value| value.nil? ? ENV.delete(key) : ENV[key] = value }
   end
 end

@@ -22,7 +22,7 @@
   "base_price": null,
   "fm": null,
   "envs": {
-    "APP_ENV": "2"
+    "SDK_AUDIT": "2"
   },
   "urls": {},
   "pull_percent": null,

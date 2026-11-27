@@ -6,14 +6,14 @@
 [Wait until ready](#wait-until-ready) · [Connect](#connect) · [Logs](#logs) ·
 [Stop](#stop) · [Session fields](#session-fields)
 
-`client.sessions` works with your running sessions, both compute and render.
-`list` and `get` return a `Types::ComputeSession` or a `Types::RenderSession`;
-`compute?` and `render?` tell them apart.
+`client.sessions` works with your running sessions: compute, render and VPN.
+`list` and `get` return a `Types::ComputeSession`, `Types::RenderSession` or
+`Types::VpnSession`; `compute?`, `render?` and `vpn?` tell them apart.
 
 ## Lifecycle
 
 ```text
-compute.start / render.start ──► starting ──► ready ──► sessions.stop
+compute / render / vpn.start ──► starting ──► ready ──► sessions.stop
                                     ▲           │
                                     └─ restart ─┘
 ```
@@ -77,6 +77,8 @@ ep = session.ssh.endpoint
 system("ssh", "-p", ep.port.to_s, "-l", ep.user, "--", ep.host)
 ```
 
+A ready VPN session has its `config`, see [Start a VPN session](resources.md#start-a-vpn-session).
+
 > [!WARNING]
 > Anyone with the `ssh.web` or `fm` URL can use the session without logging
 > in: keep them out of logs. `inspect` shows them as `[REDACTED]`. The SSH
@@ -97,7 +99,8 @@ logs.system.each { |e| puts "#{e.time} #{e.msg}" }
 | `container_truncated?` | `true` if the output was cut to its last 1 MiB |
 | `system` | Platform events of the session, oldest first |
 
-Logs are available for running compute sessions.
+Logs are available for running compute sessions only: for render and VPN
+sessions, and for a stopped session, `logs` raises `OctaSpace::NotFoundError`.
 
 ## Stop
 
