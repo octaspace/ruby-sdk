@@ -5,7 +5,7 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.0] - 2026-11-27
 
 The SDK follows the current OctaSpace API. Most resources changed; see the
 [resources](docs/resources.md) and [sessions](docs/sessions.md) guides.
@@ -108,6 +108,6 @@ First release.
 - Rails integration: a shared client that is shut down when the process exits.
 - A playground Rails engine for trying the API.
 
-[Unreleased]: https://github.com/octaspace/ruby-sdk/compare/v0.2.0...HEAD
+[0.3.0]: https://github.com/octaspace/ruby-sdk/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/octaspace/ruby-sdk/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/octaspace/ruby-sdk/releases/tag/v0.1.0
