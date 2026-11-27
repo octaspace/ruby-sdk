@@ -48,12 +48,12 @@ module OctaSpace
 
     # A running session (+GET /sessions+, +GET /services/{uuid}/info+).
     #
-    # {.build} returns a {ComputeSession} or a {RenderSession} by the +service+
-    # field, and a plain Session for any other service.
+    # {.build} returns a {ComputeSession}, {RenderSession} or {VpnSession} by
+    # the +service+ field, and a plain Session for any other service.
     # Many fields are nil while the session is starting.
     class Session < Model
       # @!attribute [r] service
-      #   @return [String] "compute" or "render"
+      #   @return [String] "compute", "render" or "vpn"
       # @!attribute [r] status
       #   @return [String] "starting" or "ready"
       # @!attribute [r] progress
@@ -80,6 +80,7 @@ module OctaSpace
         klass = case data["service"]
         when "compute" then ComputeSession
         when "render" then RenderSession
+        when "vpn" then VpnSession
         else Session
         end
         klass.new(data)
@@ -89,6 +90,7 @@ module OctaSpace
       def starting? = status == "starting"
       def compute? = service == "compute"
       def render? = service == "render"
+      def vpn? = service == "vpn"
 
       # @return [Time, nil] {#started_at} as a Time
       def started_time = Types.time_ms(started_at)
@@ -118,6 +120,36 @@ module OctaSpace
     class RenderSession < Session
     end
 
+    # Address and login of an +http_proxy+ VPN session (HTTP Basic). The
+    # login is valid for this session only.
+    class HttpProxyConfig < Model
+      # @!attribute [r] password
+      #   @return [String, nil] a credential: do not log it
+      attribute :ip, :port, :username, :password
+      redact :password
+    end
+
+    # A running VPN session, billed by traffic until stopped. VPN sessions
+    # have no logs.
+    class VpnSession < Session
+      # @!attribute [r] subkind
+      #   @return [String] protocol: "wg", "awg", "reality" or "http_proxy"
+      # @!attribute [r] config
+      #   @return [String, HttpProxyConfig, nil] what the client connects with,
+      #     nil until ready: a config file with the private key ("wg", "awg"), a
+      #     link ("reality") or the proxy address and login ("http_proxy"). It
+      #     is a credential: do not log it.
+      # @!attribute [r] public_ip
+      #   @return [String, nil] exit IP address
+      # @!attribute [r] rx
+      #   @return [Integer] bytes received
+      # @!attribute [r] tx
+      #   @return [Integer] bytes sent
+      attribute :subkind, :public_ip, :city, :country, :country_iso, :rx, :tx
+      attribute :config, model: HttpProxyConfig
+      redact :config
+    end
+
     # A platform event of a session's system log
     class LogEntry < Model
       # @!attribute [r] msg
@@ -130,7 +162,7 @@ module OctaSpace
       def time = Types.time_ms(ts)
     end
 
-    # Logs of a running compute session (+GET /services/{uuid}/logs+)
+    # Logs of a running compute session; render and VPN sessions have none (+GET /services/{uuid}/logs+)
     class SessionLogs < Model
       # @!attribute [r] system
       #   @return [Array<LogEntry>] platform events, oldest first

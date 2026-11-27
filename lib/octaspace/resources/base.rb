@@ -24,6 +24,8 @@ module OctaSpace
       def get(path, **opts) = transport.get(path, **opts)
       def post(path, **opts) = transport.post(path, **opts)
       def patch(path, **opts) = transport.patch(path, **opts)
+      def put(path, **opts) = transport.put(path, **opts)
+      def delete(path, **opts) = transport.delete(path, **opts)
 
       # Encode a single path segment to prevent path traversal
       # @param segment [String, Integer]
@@ -33,8 +35,8 @@ module OctaSpace
       end
 
       # Keeps only the given keys whose value is not nil, so a request never
-      # carries fields the caller did not set: the API refuses unknown fields,
-      # and treats an absent ssh/fm differently from false.
+      # carries fields the caller did not set. An unknown key raises
+      # ArgumentError before anything is sent (the API would refuse it).
       def compact_params(params, allowed)
         params = params.to_h.transform_keys(&:to_sym)
         unknown = params.keys - allowed
@@ -64,9 +66,17 @@ module OctaSpace
 
       # Machine listings: "null" strings become nil and numeric GPU strings
       # become numbers.
-      def normalize_machines(data)
-        JsonNull.gpu_numbers!(JsonNull.null_strings!(Array(data)), GPU_INTEGER_FIELDS)
+      def normalize_machines(data, fields = GPU_INTEGER_FIELDS)
+        JsonNull.gpu_numbers!(JsonNull.null_strings!(Array(data)), fields)
       end
+
+      # GET of statistics that need no API key, with "null" strings read as nil
+      def get_public(path, **params)
+        JsonNull.null_strings!(get(path, params: params, auth: :none).data)
+      end
+
+      # Converts a Time (or anything with #to_time) to Unix seconds
+      def unix(value) = value.respond_to?(:to_time) ? value.to_time.to_i : value
     end
   end
 end

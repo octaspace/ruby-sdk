@@ -9,8 +9,8 @@ module OctaSpace
     #
     # - +Authorization: Bearer <api_key>+ per endpoint auth mode
     # - JSON request encoding and response parsing
-    # - Retries with exponential backoff and jitter for GET and idempotent
-    #   requests only, honouring Retry-After up to {Configuration#max_retry_after}
+    # - Retries with exponential backoff and jitter for GET, PUT, DELETE and
+    #   idempotent requests only, honouring Retry-After up to {Configuration#max_retry_after}
     # - Failover across several base URLs for GET requests on network errors;
     #   requests that change state are never sent to a second host
     # - on_request / on_response hooks, one log line per request
@@ -24,6 +24,15 @@ module OctaSpace
     class FaradayTransport < Base
       # Statuses worth retrying: rate limit and transient gateway/backend failures
       RETRY_STATUSES = [429, 502, 503, 504].freeze
+
+      # Methods that are safe to repeat
+      IDEMPOTENT_METHODS = %i[get put delete].freeze
+
+      # Header that tells the API which app is calling
+      APP_HEADER = "X-OCTA-APP"
+
+      # Value of {APP_HEADER}
+      APP_NAME = "ruby-sdk"
 
       # @param config [OctaSpace::Configuration]
       # @param sleeper [#call] waits the given number of seconds between retries
@@ -43,7 +52,7 @@ module OctaSpace
       def request(method, path, params: {}, body: nil, auth: :required, idempotent: false)
         method = method.to_sym
         headers = build_headers(method, path, auth, body)
-        retryable = method == :get || idempotent
+        retryable = IDEMPOTENT_METHODS.include?(method) || idempotent
         attempt = 0
 
         begin
@@ -147,7 +156,7 @@ module OctaSpace
       end
 
       def build_headers(method, path, auth, body)
-        headers = {"User-Agent" => config.user_agent, "Accept" => "application/json"}
+        headers = {"User-Agent" => config.user_agent, "Accept" => "application/json", APP_HEADER => APP_NAME}
         headers["Content-Type"] = "application/json" unless body.nil?
 
         unless auth == :none

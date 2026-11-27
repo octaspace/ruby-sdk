@@ -24,11 +24,12 @@ require "octaspace/resources/compute"
 require "octaspace/resources/render"
 require "octaspace/resources/sessions"
 require "octaspace/resources/hosting"
+require "octaspace/resources/vpn"
 require "octaspace/client"
 
-# The official Ruby library for the OctaSpace API: rent compute machines and
-# render nodes, manage sessions and the nodes you host, and read GPU market
-# statistics.
+# The official Ruby library for the OctaSpace API: rent compute machines,
+# render nodes and VPN, manage sessions and the nodes you host, and read
+# platform, GPU market and mining statistics.
 #
 # @example Quick start
 #   OctaSpace.configure do |config|

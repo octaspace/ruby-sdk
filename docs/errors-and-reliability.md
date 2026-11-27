@@ -24,8 +24,9 @@ An error response from the API is raised as a subclass of
 
 All classes are in the `OctaSpace` namespace. When the API cannot be reached at
 all, the error is an `OctaSpace::NetworkError`: `ConnectionError` (DNS,
-connection or TLS failure) or `TimeoutError`. Every error the SDK raises is an
-`OctaSpace::Error`.
+connection or TLS failure) or `TimeoutError`. Every error from the API or the
+network is an `OctaSpace::Error`. A missing or unknown parameter raises Ruby's
+`ArgumentError` before the request is sent.
 
 ```ruby
 begin
@@ -65,7 +66,8 @@ end
 
 ## Retries
 
-GET requests and `sessions.stop` are retried automatically on connection
+GET requests, `sessions.stop`, `hosting.start_maintenance` and
+`hosting.end_maintenance` are retried automatically on connection
 errors, timeouts and the statuses 429, 502, 503 and 504, with exponential
 backoff and jitter. They honour `Retry-After` up to 60 seconds; when the API
 asks to wait longer, the `RateLimitError` is raised at once.

@@ -15,6 +15,10 @@ Minitest.backtrace_filter = Minitest::BacktraceFilter.new
 # Disable all real HTTP connections in tests
 WebMock.disable_net_connect!
 
+# Tests configure the key and host themselves
+ENV.delete("OCTA_API_KEY")
+ENV.delete("OCTA_API_URL")
+
 module Minitest
   class Test
     include FixtureHelpers

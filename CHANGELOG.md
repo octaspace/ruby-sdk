@@ -12,11 +12,16 @@ The SDK follows the current OctaSpace API. Most resources changed; see the
 
 ### Added
 
-- `client.compute`: `list`, `start`, `start_batch` and `restart`.
+- `client.compute`: `list`, `apps`, `start`, `start_batch` and `restart`.
+- `client.vpn`: `list` and `start` (WireGuard, AmneziaWG, VLESS Reality and
+  HTTP proxy).
 - `client.render`: `list`, `start` and `start_batch`.
-- `client.sessions`: `get`, `logs`, `stop`, `wait_ready` and `wait_stopped`.
-- `client.hosting`: `nodes` and `set_prices`.
-- `client.stats`: `gpu_current`, `gpu_history` and `gpu_locations`.
+- `client.sessions`: `get`, `logs`, `stop`, `wait_ready` and `wait_stopped`;
+  VPN sessions.
+- `client.hosting`: `nodes`, `get`, `set_prices`, `start_maintenance` and
+  `end_maintenance`.
+- `client.network.history`, with `points`.
+- `client.stats`: `gpu_current`, `gpu_history`, `gpu_locations` and `mining`.
 - Read-only response models under `OctaSpace::Types`, with `[]`, `to_h` and
   pattern matching.
 - `OctaSpace::Money` for amounts in micro-USD.
@@ -24,14 +29,16 @@ The SDK follows the current OctaSpace API. Most resources changed; see the
 - `retry_after`, `rate_limit` and `body` on `ApiError`, and `client.rate_limit`.
 - The `max_retry_after` and `max_retry_interval` options.
 - `OctaSpace::DEFAULT_BASE_URL` constant.
+- The `OCTA_API_KEY` and `OCTA_API_URL` environment variables set the default
+  API key and host.
 - Guides under `docs/`.
 
 ### Changed
 
 - **Breaking:** the API key is sent as `Authorization: Bearer <key>`. A key
   that already has the `Bearer ` prefix is accepted.
-- **Breaking:** the default base URL is `https://api-dev.octa.space`
-  (`DEFAULT_BASE_URL`).
+- **Breaking:** the SDK works with the current OctaSpace API at
+  `https://api.octa.space` (`DEFAULT_BASE_URL`).
 - **Breaking:** nodes are identified by their node number, for example
   `7KQ4-M2XD-4`.
 - **Breaking:** prices, charges and the balance are integer micro-USD.
@@ -41,11 +48,14 @@ The SDK follows the current OctaSpace API. Most resources changed; see the
   sessions only.
 - **Breaking:** HTTP 400 raises `ValidationError`, and the error message is the
   API's message.
-- **Breaking:** only GET requests and `sessions.stop` are retried; starting and
-  restarting sessions are never retried. A `Retry-After` longer than 60 seconds
-  raises the error at once.
+- **Breaking:** only GET requests, `sessions.stop` and node maintenance are
+  retried; starting and restarting sessions and setting prices are never
+  retried. A `Retry-After` longer than 60 seconds raises the error at once.
 - **Breaking:** a method that needs an API key raises `AuthenticationError`
   before sending a request when none is configured.
+- **Breaking:** an unknown parameter raises `ArgumentError` before the request
+  is sent.
+- Every request carries the `X-OCTA-APP: ruby-sdk` header.
 - **Breaking:** `on_request` no longer receives the request headers. The log
   never contains headers or bodies.
 - **Breaking:** requires Ruby 3.3 or later and Faraday 2.14.3 or later;

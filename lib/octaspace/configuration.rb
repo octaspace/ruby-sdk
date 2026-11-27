@@ -2,7 +2,7 @@
 
 module OctaSpace
   # Default API base URL
-  DEFAULT_BASE_URL = "https://api-dev.octa.space"
+  DEFAULT_BASE_URL = "https://api.octa.space"
 
   # Prefix of account API keys (created in the OctaSpace dashboard under
   # Account → Credentials → API Keys)
@@ -21,14 +21,18 @@ module OctaSpace
     # --- Authentication ---
 
     # Account API key (+octa_ak_…+), sent as +Authorization: Bearer <key>+.
-    # Network and GPU statistics and the machine listings work without it. A
-    # value that already starts with "Bearer " is accepted.
+    # Defaults to the +OCTA_API_KEY+ environment variable. Network and GPU
+    # statistics, the machine listings and the apps work without it. A value
+    # that already starts with "Bearer " is accepted.
     # @return [String, nil]
     attr_reader :api_key
 
     # --- Connection ---
 
-    # @return [String] Base URL of the API (one host)
+    # Base URL of the API (one host). Defaults to the +OCTA_API_URL+
+    # environment variable (several hosts separated by commas set
+    # {#base_urls}), otherwise {DEFAULT_BASE_URL}.
+    # @return [String]
     attr_accessor :base_url
 
     # Ordered list of API hosts. GET requests fail over to the next URL
@@ -62,9 +66,9 @@ module OctaSpace
     attr_accessor :idle_timeout
 
     # --- Retry ---
-    # Only GET requests and the idempotent session stop are retried, on network
-    # errors and on 429/502/503/504. Starting or restarting a service is never
-    # retried: it costs money and is rate limited.
+    # Only GET requests and the idempotent calls (session stop, node
+    # maintenance) are retried, on network errors and on 429/502/503/504.
+    # Starting or restarting a session and changing prices are never retried.
 
     # @return [Integer] Maximum number of retries on transient failures
     attr_accessor :max_retries
@@ -135,6 +139,7 @@ module OctaSpace
     def initialize
       DEFAULTS.each { |k, v| public_send(:"#{k}=", v) }
       @user_agent = "octaspace-ruby/#{OctaSpace::VERSION} Ruby/#{RUBY_VERSION}"
+      apply_env
     end
 
     # Sets the API key; surrounding whitespace and a leading "Bearer " are
@@ -172,6 +177,16 @@ module OctaSpace
     end
 
     private
+
+    # Reads OCTA_API_KEY and OCTA_API_URL (one URL, or several separated by commas)
+    def apply_env
+      self.api_key = ENV["OCTA_API_KEY"]
+      urls = clean_urls(ENV["OCTA_API_URL"].to_s.split(","))
+      return if urls.empty?
+
+      self.base_url = urls.first
+      self.base_urls = urls if urls.size > 1
+    end
 
     def clean_urls(value)
       Array(value).map { |url| url.to_s.strip.sub(%r{/+\z}, "") }.reject(&:empty?)

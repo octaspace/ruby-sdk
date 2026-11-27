@@ -27,8 +27,8 @@ module OctaSpace
 
       # Running sessions of the account, oldest first.
       # GET /sessions
-      # @return [Array<OctaSpace::Types::Session>] ComputeSession / RenderSession,
-      #   or a plain Session for a service this SDK does not know
+      # @return [Array<OctaSpace::Types::Session>] ComputeSession, RenderSession or
+      #   VpnSession, or a plain Session for a service this SDK does not know
       def list
         Array(get_raw("/sessions").data).map { |item| Types::Session.build(item) }
       end
@@ -47,7 +47,8 @@ module OctaSpace
       # System log and latest container output of a running compute session.
       # GET /services/{uuid}/logs
       #
-      # Render sessions have no logs; a stopped session's logs are gone (404).
+      # Render and VPN sessions have no logs, and a stopped session's logs are
+      # gone: these raise {OctaSpace::NotFoundError}.
       # @param uuid [String]
       # @param tail [Integer, nil] last lines of container output, 1..1000 (default 200)
       # @return [OctaSpace::Types::SessionLogs]

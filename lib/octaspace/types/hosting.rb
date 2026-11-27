@@ -17,13 +17,20 @@ module OctaSpace
       attribute :base, :storage, :traffic, :min_rent_minutes
     end
 
-    # Whether a node is offered for a service, and why not
+    # Whether a node is offered for a service or a VPN protocol, and why not
     class ServiceOffer < Model
       # @!attribute [r] reason
-      #   @return [String, nil] e.g. "ports_closed"
-      attribute :offered, :reason
+      #   @return [String, nil] e.g. "ports_closed" or "vpn_probe_failed"
+      # @!attribute [r] details
+      #   @return [String, nil] what the check found
+      attribute :offered, :reason, :details
 
       def offered? = offered == true
+
+      # @return [Hash{String=>ServiceOffer}] VPN only: the offer of each protocol
+      def protocols
+        @protocols ||= self["protocols"].to_h.transform_values { |offer| ServiceOffer.wrap(offer) }
+      end
     end
 
     # A verification or benchmark that is running on a node
@@ -60,12 +67,14 @@ module OctaSpace
       attribute :city, :country, :latitude, :longitude
     end
 
-    # An online node of the account (+GET /hosting/nodes+)
+    # An online node of the account (+GET /hosting/nodes+, +GET /hosting/nodes/{number}+)
     class HostingNode < Model
       # @!attribute [r] number
       #   @return [String] node number, e.g. "7KQ4-M2XD-4" (the one renters see)
       # @!attribute [r] status
       #   @return [String] "idle", "rented", "verification", "benchmark" or "unknown"
+      # @!attribute [r] maintenance
+      #   @return [Boolean] in maintenance: not offered for new rentals
       # @!attribute [r] verified
       #   @return [Boolean, nil] passed verification; nil while unknown
       # @!attribute [r] osn
@@ -87,7 +96,7 @@ module OctaSpace
       def idle? = status == "idle"
       def rented? = status == "rented"
 
-      # @return [Hash{String=>ServiceOffer}] by service ("compute", "render", …)
+      # @return [Hash{String=>ServiceOffer}] by service ("compute", "render", "vpn", …)
       def services
         @services ||= self["services"].to_h.transform_values { |offer| ServiceOffer.wrap(offer) }
       end

@@ -24,8 +24,8 @@ module OctaSpace
   #     base_urls: [OctaSpace::DEFAULT_BASE_URL, "https://octaspace-proxy.your-company.example"]
   #   )
   #
-  # @example Without an API key (network and GPU statistics, machine listings)
-  #   client = OctaSpace::Client.new
+  # @example Without an API key (network and GPU statistics, listings, apps)
+  #   client = OctaSpace::Client.new(api_key: "")
   #   client.network.info
   #
   # @example With hooks
@@ -37,9 +37,9 @@ module OctaSpace
   class Client
     # @return [Resources::Accounts] balance
     attr_reader :accounts
-    # @return [Resources::Compute] machines for rent: list, start, start_batch, restart
+    # @return [Resources::Compute] machines for rent: list, apps, start, start_batch, restart
     attr_reader :compute
-    # @return [Resources::Hosting] nodes of the account and their prices
+    # @return [Resources::Hosting] nodes of the account: state, prices, maintenance
     attr_reader :hosting
     # @return [Resources::Network] platform statistics; no API key needed
     attr_reader :network
@@ -47,11 +47,15 @@ module OctaSpace
     attr_reader :render
     # @return [Resources::Sessions] running sessions: list, get, logs, stop, wait_ready, wait_stopped
     attr_reader :sessions
-    # @return [Resources::Stats] GPU market statistics; no API key needed
+    # @return [Resources::Stats] GPU market and mining statistics; no API key needed
     attr_reader :stats
+    # @return [Resources::Vpn] VPN nodes: list, start
+    attr_reader :vpn
 
-    # @param api_key [String, nil] API key of your OctaSpace account (+octa_ak_…+); see
-    #   the README for the calls that work without one
+    # @param api_key [String, nil] API key of your OctaSpace account (+octa_ak_…+);
+    #   defaults to the global configuration, which reads +OCTA_API_KEY+. Pass ""
+    #   for a client without a key. See the README for the calls that work
+    #   without one.
     # @param opts [Hash] Per-instance configuration overrides.
     #   Any attribute from OctaSpace::Configuration can be passed here.
     def initialize(api_key: nil, transport: nil, **opts)
@@ -64,6 +68,7 @@ module OctaSpace
       @render = Resources::Render.new(@transport)
       @sessions = Resources::Sessions.new(@transport)
       @stats = Resources::Stats.new(@transport)
+      @vpn = Resources::Vpn.new(@transport)
     end
 
     # Shut down persistent connections (only relevant in keep_alive mode)
@@ -89,7 +94,7 @@ module OctaSpace
     # Merge global config with per-instance overrides
     def build_config(api_key, overrides)
       cfg = OctaSpace.configuration.dup
-      cfg.api_key = api_key
+      cfg.api_key = api_key unless api_key.nil?
       overrides.each do |key, value|
         cfg.public_send(:"#{key}=", value) if cfg.respond_to?(:"#{key}=")
       end

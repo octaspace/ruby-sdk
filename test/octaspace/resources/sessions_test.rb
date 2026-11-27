@@ -26,9 +26,40 @@ class OctaSpace::SessionsResourceTest < Minitest::Test
     compute, render, vpn = @client.sessions.list
     assert_instance_of OctaSpace::Types::ComputeSession, compute
     assert_instance_of OctaSpace::Types::RenderSession, render
-    assert_instance_of OctaSpace::Types::Session, vpn
+    assert_instance_of OctaSpace::Types::VpnSession, vpn
+    assert vpn.vpn?
     assert vpn.ready?
-    assert_equal "x", vpn[:config]
+    assert_equal "x", vpn.config
+  end
+
+  def test_get_vpn_session_with_config_file
+    stub_request(:get, info_url).to_return(status: 200, body: fixture("session_vpn_ready.json"))
+    session = @client.sessions.get(UUID)
+
+    assert_instance_of OctaSpace::Types::VpnSession, session
+    assert_equal "wg", session.subkind
+    assert_includes session.config, "[Interface]"
+    assert_equal "203.0.113.7", session.public_ip
+    refute_includes session.inspect, "PrivateKey"
+  end
+
+  def test_get_http_proxy_session
+    stub_request(:get, info_url).to_return(status: 200, body: fixture("session_vpn_http_proxy.json"))
+    session = @client.sessions.get(UUID)
+    config = session.config
+
+    assert_instance_of OctaSpace::Types::HttpProxyConfig, config
+    assert_equal ["203.0.113.7", 40_000, "a1b2c3d4"], [config.ip, config.port, config.username]
+    assert_equal "tt1f70D8qUUknMdlHoIUyp3Q", config.password
+    refute_includes config.inspect, config.password
+    refute_includes session.inspect, config.password
+  end
+
+  def test_session_envs_keep_null_strings
+    body = JSON.parse(fixture("session_compute_ready.json")).merge("envs" => {"MODE" => "null"})
+    stub_request(:get, info_url).to_return(status: 200, body: body.to_json)
+
+    assert_equal({"MODE" => "null"}, @client.sessions.get(UUID).envs)
   end
 
   def test_list_requires_api_key

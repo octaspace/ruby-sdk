@@ -2,7 +2,7 @@
 
 module OctaSpace
   module Resources
-    # GPU market statistics; no API key needed
+    # GPU market and mining statistics; no API key needed
     #
     # @example
     #   client.stats.gpu_current.gpus.first.rented_price.p50
@@ -14,7 +14,7 @@ module OctaSpace
       # @param verified [String, Symbol, nil] "all" (default), "yes" or "no"
       # @return [OctaSpace::Types::GpuMarket]
       def gpu_current(verified: nil)
-        Types::GpuMarket.new(fetch("/stats/gpu/current", verified: verified))
+        Types::GpuMarket.new(get_public("/stats/gpu/current", verified: verified))
       end
 
       # GPU market over time, by model. Defaults to the last day with hourly
@@ -29,7 +29,7 @@ module OctaSpace
       # @param step [Integer, nil] seconds between points, at least 300 (default 3600)
       # @return [Hash{String=>OctaSpace::Types::GpuHistory}] by model name
       def gpu_history(gpu_name: nil, verified: nil, from: nil, to: nil, step: nil)
-        data = fetch("/stats/gpu/history",
+        data = get_public("/stats/gpu/history",
           gpu_name: gpu_name.is_a?(Array) ? gpu_name.join(",") : gpu_name,
           verified: verified, start: unix(from), end: unix(to), step: step)
         data.to_h.transform_values { |history| Types::GpuHistory.wrap(history) }
@@ -39,16 +39,19 @@ module OctaSpace
       # GET /stats/gpu/locations
       # @return [Array<OctaSpace::Types::GpuLocation>]
       def gpu_locations
-        Types::GpuLocation.wrap_all(fetch("/stats/gpu/locations"))
+        Types::GpuLocation.wrap_all(get_public("/stats/gpu/locations"))
       end
 
-      private
-
-      def fetch(path, **params)
-        JsonNull.null_strings!(get(path, params: params, auth: :none).data)
+      # What the platform's mining sessions run: miners, algorithms and pools,
+      # most used first, and the miners per day.
+      # GET /stats/mining
+      #
+      # @param role [String, Symbol, nil] "gpu" (default) or "cpu"
+      # @param days [Integer, nil] days back, today included, 1..365 (default 30)
+      # @return [OctaSpace::Types::MiningUsage]
+      def mining(role: nil, days: nil)
+        Types::MiningUsage.new(get_public("/stats/mining", role: role, days: days))
       end
-
-      def unix(value) = value.respond_to?(:to_time) ? value.to_time.to_i : value
     end
   end
 end
